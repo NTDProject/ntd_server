@@ -34,7 +34,7 @@ module.exports = (router) => {
 
     router.get('/getUngVienByViTriChienDich/:chiendich_id', async (req, res) => {
         let rs ={};
-        let sql ='select * from td_ungvien where ungvien_id not in (select ungvien_id from td_map_ungvien_vitri where chiendich_id ="' + req.params.chiendich_id + '")'
+        let sql ='select distinct * from td_ungvien where ungvien_id not in (select distinct ungvien_id from td_map_ungvien_vitri where chiendich_id ="' + req.params.chiendich_id + '")'
         let rs1 = await dbs.execute(sql)
         rs.ungvien = rs1
         let sql2  = 'select v.* from td_dm_vitri v, td_map_chiendich_vitri m where v.vitri_id = m.vitri_id and m.chiendich_id = "' + req.params.chiendich_id + '"'
@@ -52,9 +52,16 @@ module.exports = (router) => {
     });
 
     router.get('/getAllUngVienAndViTriByChienDich/:chiendich_id', async (req, res) => {
-        let sql = 'select u.*,v.vitri_id, v.ten_vitri, 0 pass from td_chiendich c, td_ungvien u, td_map_ungvien_vitri m, td_dm_vitri v WHERE c.chiendich_id = m.chiendich_id and c.giaidoan = m.giaidoan and u.ungvien_id = m.ungvien_id and m.vitri_id = v.vitri_id and m.chiendich_id ="'+ req.params.chiendich_id +'"'   
-        rs = await dbs.execute(sql);
-        res.json(rs);
+        let result =  {}
+        let sql = 'select u.*,v.vitri_id, v.ten_vitri, 0 pass, "" note from td_chiendich c, td_ungvien u, td_map_ungvien_vitri m, td_dm_vitri v WHERE m.status =1 and  c.chiendich_id = m.chiendich_id and c.giaidoan = m.giaidoan and u.ungvien_id = m.ungvien_id and m.vitri_id = v.vitri_id and m.chiendich_id ="'+ req.params.chiendich_id +'"'   
+        console.log(sql)
+        let rs = await dbs.execute(sql);
+        result.chiendich = await rs 
+        let sql2 = 'select * from td_dm_giaidoan where giaidoan not in (select distinct giaidoan from td_map_ungvien_vitri where chiendich_id ="'+ req.params.chiendich_id +'")'
+        let rs2 = await dbs.execute(sql2);
+        result.giaidoan = await rs2
+        
+        res.json(result);
     });
 
     router.post('/save', async (req, res) => {
@@ -65,7 +72,7 @@ module.exports = (router) => {
             let rs1 = await dbs.execute(sql);
             if(rs1.affectedRows > 0){
                 req.body.ListViTri.map( async v => {
-                    let sql3 = 'INSERT INTO td_map_ungvien_vitri(ungvien_id, vitri_id, chiendich_id) VALUES ("' + id +'","'+v.vitri_id+'","'+req.body.chiendich_id+'")'
+                    let sql3 = 'INSERT INTO td_map_ungvien_vitri(ungvien_id, vitri_id, chiendich_id, giaidoan, status) VALUES ("' + id +'","'+v.vitri_id+'","'+req.body.chiendich_id+'", 1, 1)'
                     let rs2 = await dbs.execute(sql3);
                     if(rs2.affectedRows == 0){
                         await dbs.execute(sql2);
@@ -85,7 +92,7 @@ module.exports = (router) => {
                 req.body.ListViTri.map( async v => {
                     if(v.checkapp > 0){
                     console.log(v.checkapp)
-                    let sql7 = 'INSERT INTO td_map_ungvien_vitri(ungvien_id, vitri_id, chiendich_id) VALUES ("' + req.body.ungvien_id+'","'+v.vitri_id+'","'+req.body.chiendich_id+'")'
+                    let sql7 = 'INSERT INTO td_map_ungvien_vitri(ungvien_id, vitri_id, chiendich_id, giaidoan, status ) VALUES ("' + req.body.ungvien_id+'","'+v.vitri_id+'","'+req.body.chiendich_id+'", 1, 1)'
                     let rs7 = await dbs.execute(sql7);
                     if(rs7.affectedRows == 0){
                         res.json({status:false, message: "luu vi tri sai"})

@@ -48,13 +48,6 @@ module.exports = (router) => {
     });
 
     router.post('/checkSave', async (req, res) => {
-        await req.body.ListViTri.map( async v => {
-            let sql10 = 'select count(*) as checkvitri from td_map_ungvien_vitri where vitri_id="'+v.vitri_id+'" and chiendich_id = "'+req.body.chiendich_id+'"'
-            let rs10 = await dbs.execute(sql10)
-            if(rs10[0].checkvitri > 0 && v.soluong == 0){
-                res.json({status:false , message:"xxx"})
-            }
-        })
         res.json({status:true , message:"xxxx"})
     })
 
@@ -63,13 +56,14 @@ module.exports = (router) => {
     //update chiến dịch
     router.post('/save', async (req, res) => {
         let id = uniqid()
-         
+         console.log(req.body.ngay_batdau)
+         console.log(req.body.ngay_ketthuc)
         if(req.body.chiendich_id == "addPage")
         {
             
             let sql3 = 'delete FROM td_chiendich WHERE chiendich_id = "' + id + '"'
             let sql4 = 'delete FROM td_map_chiendich_vitri WHERE chiendich_id = "' + id + '"'
-            let sql = 'INSERT INTO td_chiendich(chiendich_id, ten_chiendich, ngay_batdau, ngay_ketthuc, trangthai, mota) VALUES ("'+id+ '", "' +req.body.ten_chiendich+'", DATE("'+ (req.body.ngay_batdau) +'")+1, DATE("'+ (req.body.ngay_ketthuc)+'")+1, "'+req.body.trangthai+'", "'+req.body.mota + '" )'
+            let sql = 'INSERT INTO td_chiendich(chiendich_id, ten_chiendich, ngay_batdau, ngay_ketthuc, trangthai, mota, giaidoan) VALUES ("'+id+ '", "' +req.body.ten_chiendich+'", STR_TO_DATE("'+ (req.body.ngay_batdau) +'", "%d/%m/%Y"), STR_TO_DATE("'+ (req.body.ngay_ketthuc)+'", "%d/%m/%Y"), "'+req.body.trangthai+'", "'+req.body.mota + '", "1" )'
             let rs1 = await dbs.execute(sql);
             if(rs1.affectedRows > 0){
                 req.body.ListViTri.map(v => {
@@ -124,7 +118,7 @@ module.exports = (router) => {
     router.post('/add',  (req, res) => {
         let sql = ''
         req.body.ungvien.map( async u => {
-            sql = 'INSERT INTO td_map_ungvien_vitri (ungvien_id, vitri_id, chiendich_id) VALUES ("'+ u.ungvien_id+'","'+req.body.vitri_id+'","'+req.body.chiendich_id+'")'
+            sql = 'INSERT INTO td_map_ungvien_vitri (ungvien_id, vitri_id, chiendich_id, giaidoan, status) VALUES ("'+ u.ungvien_id+'","'+req.body.vitri_id+'","'+req.body.chiendich_id+'", "1","1")'
             let rs = await dbs.execute(sql)
             if(rs.affectedRows == 0){
                 res.json({status: false, message: 'lưu lỗi'})
@@ -149,14 +143,24 @@ module.exports = (router) => {
             res.json({status:false, message: error })
         }
 
-        let mail = ''
+        let mailpass = ''
+        let mailfalse = ''
         await req.body.UngVien.map(async u => {
-            if(mail == ''){
-                mail += u.email
-            }else{
-                mail = mail + ',' + u.email
+            if(u.pass == 1){
+                if(mailpass == ''){
+                    mailpass += u.email
+                }else{
+                    mailpass = mailpass + ',' + u.email
+                }
             }
-            let sql2 = 'INSERT INTO td_map_ungvien_vitri (ungvien_id, vitri_id, chiendich_id, GiaiDoan, Status) VALUES ("' + u.ungvien_id +'", "' + u.vitri_id + '", "' + req.body.chiendich_id + '", "' + req.body.giaidoansau_id + '", "1" )'
+            else{
+                if(mailfalse == ''){
+                    mailfalse += u.email
+                }else{
+                    mailfalse = mailfalse + ',' + u.email
+                }
+            }
+            let sql2 = 'INSERT INTO td_map_ungvien_vitri (ungvien_id, vitri_id, chiendich_id, GiaiDoan, Status, note) VALUES ("' + u.ungvien_id +'", "' + u.vitri_id + '", "' + req.body.chiendich_id + '", "' + req.body.giaidoansau_id + '", "' + u.pass + '", "' + u.note + '")'
             await dbs.execute(sql2);
         })
         let transporter = nodemailer.createTransport({
@@ -167,23 +171,41 @@ module.exports = (router) => {
             }
         });
 
-        let content = "<b>Bạn đã vượt qua " + req.body.giaidoanhientai + " của " +  req.body.ten_chiendich + "</b><br>" 
-        content += "<p>Hẹn gặp lại bạn trong " + req.body.giaidoansau + " của " + req.body.ten_chiendich + " chi tiết như sau :</p> "
-        content += "<p> thời gian: " + req.body.ngayhen + "</p>"
-        content += "<p> địa điểm: " + req.body.diadiemhen + "</p>"
+        let contentPass = "<b>Bạn đã vượt qua " + req.body.giaidoanhientai + " của " +  req.body.ten_chiendich + "</b><br>" 
+        contentPass += "<p>Hẹn gặp lại bạn trong " + req.body.giaidoansau + " của " + req.body.ten_chiendich + " chi tiết như sau :</p> "
+        contentPass += "<p> thời gian: " + req.body.ngayhen + "</p>"
+        contentPass += "<p> địa điểm: " + req.body.diadiemhen + "</p>"
+
+        let contentFalse = "<b>Bạn đã dừng lại tại " + req.body.giaidoanhientai + " của " +  req.body.ten_chiendich + "</b><br>" 
+        contentFalse += "<p>Hẹn gặp lại bạn trong các chiến dịch tuyển dụng khác. Chân thành cảm ơn bạn ! </p> "
+
         // send mail with defined transport objec
         transporter.sendMail({
           from: '"tdhoang96" <tdhoang96@gmail.com>', // sender address
-          to: mail, // list of receivers
+          to: mailpass, // list of receivers
           subject: "Thông báo tuyển dụng", // Subject line
           text: "Hello world?", // plain text body
-          html: content // html body
+          html: contentPass // html body
         },(error,info)=>{
             if(error){
                 res.json({status:false, message: error })
             }
          
         });
+
+        transporter.sendMail({
+            from: '"tdhoang96" <tdhoang96@gmail.com>', // sender address
+            to: mailfalse, // list of receivers
+            subject: "Thông báo tuyển dụng", // Subject line
+            text: "Hello world?", // plain text body
+            html: contentFalse // html body
+          },(error,info)=>{
+              if(error){
+                  res.json({status:false, message: error })
+              }
+           
+          });
+
         res.json({status:true, message: "thanh cong"})
         });
     
