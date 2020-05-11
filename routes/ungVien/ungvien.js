@@ -43,10 +43,28 @@ module.exports = (router) => {
         res.json(rs);
     });
 
+    router.post('/deleteUngVienOfChienDich/', async (req, res) => {
+        let sql ='DELETE FROM td_map_ungvien_vitri WHERE ungvien_id = "' + req.body.ungvien_id + '" and chiendich_id =  "' + req.body.chiendich_id + '"'
+        let rs= await dbs.execute(sql)
+        if(rs.affectedRows > 0){
+            return res.json({status: true, message: 'Xoá ứng viên khỏi chiến dịch thành công'})
+        }
+        else{
+            return res.json({status: false, message: 'Xoá ứng viên khỏi chiến dịch không thành công'})
+        }
+    });
+
+
+    router.post('/history', async (req, res) => {
+        let sql ='select case when m.status = 1 then "được tham gia" else "Không được tham gia" end Status, m.note, g.ten_giaidoan from td_dm_giaidoan g, td_map_ungvien_vitri m where g.giaidoan = m.giaidoan and m.chiendich_id = "' + req.body.chienDichID + '" and m.ungvien_id ="' + req.body.ungVienID +'" and m.vitri_id = "' + req.body.viTriID +'"'
+        console.log(sql)
+        let rs = await dbs.execute(sql)
+        res.json(rs);
+    });
+
 
     router.get('/getUngVienByChienDich/:chiendich_id', async (req, res) => {
         let sql = 'select DISTINCT u.*  from td_ungvien u, td_map_ungvien_vitri m  where m.ungvien_id = u.ungvien_id and  m.chiendich_id = "'+ req.params.chiendich_id +'"'   
-        console.log(sql)
         rs = await dbs.execute(sql);
         res.json(rs);
     });

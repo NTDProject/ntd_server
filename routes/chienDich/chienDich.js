@@ -130,9 +130,21 @@ module.exports = (router) => {
     })
 
     //xoá chiến dịch
-    router.delete('/delete', async (req, res) => {
-        let rs = await dbs.execute('DELETE FROM td_chiendich WHERE chiendich_id = "' + req.body.chiendich_id +'"');
-        res.json(rs);
+    router.post('/delete', async (req, res) => {
+        let rs = await dbs.execute('select count(*) tong FROM td_map_ungvien_vitri WHERE chiendich_id = "' + req.body.chiendich_id +'"');
+        if(rs[0].tong > 0){
+            res.json({status: false, message: "Không được xoá chiến dịch đã có ứng viên tham gia"})
+        }
+        else{
+            let rs = await dbs.execute('DELETE FROM td_chiendich WHERE chiendich_id = "' + req.body.chiendich_id +'"');
+            if(rs.affectedRows>0){
+                res.json({status: true, message: "Xoá chiến dịch thành công"});
+            }
+            else{
+                res.json({status: false, message: "Xoá chiến dịch không thành công"});  
+            }
+            
+        }
     });
 
     router.post('/tranfer', async (req, res) => {
@@ -207,6 +219,41 @@ module.exports = (router) => {
           });
 
         res.json({status:true, message: "thanh cong"})
+        });
+
+        router.get('/chung/analysis/', async (req, res) => {
+            result = {}
+            let sql = 'select (select count(*) from td_chiendich) as sumChienDich, (select count(*) from td_ungvien) as sumUngVien, (select count(distinct ungvien_id) from td_map_ungvien_vitri where giaidoan = 0 and status = 1) as pass, (SELECT count(distinct ungvien_id) FROM `td_map_ungvien_vitri` m, td_chiendich c WHERE c.chiendich_id = m. chiendich_id and c.giaidoan != 0 and m.status = 1) process from dual'
+            let rs = await dbs.execute(sql);
+            
+            let sql1 = 'select ten_vitri from td_dm_vitri order by vitri_id'
+            let rs1 = await dbs.execute(sql1);
+            let listVT = []
+            const promises1 = rs1.map( a => {
+                listVT.push(a.ten_vitri)
+            })
+            
+            let sql2 = 'select v.vitri_id, v.ten_vitri, case when sum(m.soluong) is null then 0 else sum(m.soluong) end soluong from td_dm_vitri v left JOIN td_map_chiendich_vitri m on m.vitri_id=v.vitri_id group by v.vitri_id, v.ten_vitri order by v.vitri_id'
+            let rs2 = await dbs.execute(sql2);
+            let listVTNC=[]
+            const promises2 = rs2.map( b => {
+                listVTNC.push(b.soluong)
+            })
+            
+            let sql3 = 'select v.vitri_id, case when sum(m.status) is null then 0 else sum(m.status) end soluong from td_dm_vitri v left join td_map_ungvien_vitri m on m.vitri_id = v.vitri_id and giaidoan = 0 and status = 1 group by vitri_id'
+            let rs3 = await dbs.execute(sql3);
+            let listVTTT=[]
+            const promises3 = rs3.map( c => {
+                listVTTT.push(c.soluong)
+            })
+            await Promise.all(promises3,promises2,promises1)
+            result= await rs[0]
+            result.listVT =  listVT
+            result.listVTTT =  listVTTT
+            result.listVTNC =  listVTNC
+            
+            
+            res.json(result);
         });
     
 };

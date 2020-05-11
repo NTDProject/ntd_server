@@ -9,6 +9,9 @@ var indexRouter = require('./routes/index');
 var userRouter = require('./routes/user');
 var chienDichRouter = require('./routes/chienDich');
 var ungVienRouter = require('./routes/ungVien');
+var chiPhiRouter = require('./routes/ChiPhi');
+var giaiDoanRouter = require('./routes/giaiDoan');
+var viTriRouter = require('./routes/viTri');
 
 var app = express();
 
@@ -27,6 +30,9 @@ app.use('/', indexRouter);
 app.use('/user', userRouter);
 app.use('/chiendich', chienDichRouter);
 app.use('/ungvien', ungVienRouter);
+app.use('/chiphi', chiPhiRouter);
+app.use('/giaidoan', giaiDoanRouter);
+app.use('/vitri', viTriRouter);
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));

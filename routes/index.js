@@ -13,7 +13,7 @@ router.get('/', function (req, res, next) {
 router.post('/signin', async function (req, res) {
   let username = req.body.username;
   let password = req.body.password;
-
+  
   try {
     let user = await dbs.execute('select * from td_user where username = ?',[username]);    
     
