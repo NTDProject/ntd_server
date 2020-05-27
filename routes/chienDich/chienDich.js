@@ -10,14 +10,15 @@ module.exports = (router) => {
 
     //get all chiến dịch
     router.get('/', async (req, res) => {
-        let rs = await dbs.execute('select * from td_chiendich');
+        let rs = await dbs.execute('SELECT chiendich_id,ten_chiendich,DATE_FORMAT(ngay_batdau, "%d-%m-%Y") ngay_batdau,DATE_FORMAT(ngay_ketthuc, "%d-%m-%Y") ngay_ketthuc,GiaiDoan,trangthai,mota FROM td_chiendich ');
         res.json(rs);
     });
 
     router.get('/:chiendich_id', async (req, res) => {
         let sql = ''
         let sql2 = 'select c.ten_chiendich,c.mota,DATE_FORMAT(c.ngay_batdau, "%Y-%m-%d") ngay_batdau, DATE_FORMAT(c.ngay_ketthuc, "%Y-%m-%d") ngay_ketthuc,g.giaidoan giaidoanhientai_id, g.ten_giaidoan giaidoanhientai, (select h.ten_giaidoan from td_dm_giaidoan h where c.giaidoan+1 = h.giaidoan) giaidoansau, (select h.giaidoan from td_dm_giaidoan h where c.giaidoan+1 = h.giaidoan) giaidoansau_id from td_chiendich c, td_dm_giaidoan g where c.giaidoan = g.giaidoan and chiendich_id = "' + req.params.chiendich_id + '"'
-        let rs = {};
+        console.log(sql2)
+        var rs = {};
         if(req.params.chiendich_id == 'addPage'){
             sql = 'select v.vitri_id, v.ten_vitri, v.mota, 0 soluong from td_dm_vitri v'
             
@@ -26,8 +27,6 @@ module.exports = (router) => {
             sql = 'select v.vitri_id, v.ten_vitri, v.mota, CASE WHEN sum(m.soluong) is null then 0 else sum(m.soluong) end soluong from td_dm_vitri v LEFT JOIN td_map_chiendich_vitri m on v.vitri_id = m.vitri_id and m.chiendich_id = "' + req.params.chiendich_id + '" GROUP by v.vitri_id, v.ten_vitri, v.mota'
             
         }
-
-        console.log(sql)
         let rs2 = await dbs.execute(sql);
         if(req.params.chiendich_id == 'addPage'){
             rs.ten_chiendich = ''
@@ -40,8 +39,15 @@ module.exports = (router) => {
             rs.giaidoansau_id = ""
         }
         else{
-            rs3 = await dbs.execute(sql2);
-            rs = rs3[0]
+            let rs3 = await dbs.execute(sql2);
+            rs.ten_chiendich = rs3[0].ten_chiendich
+            rs.ngay_batdau = rs3[0].ngay_batdau
+            rs.ngay_ketthuc = rs3[0].ngay_ketthuc
+            rs.mota = rs3[0].mota
+            rs.giaidoanhientai = rs3[0].giaidoanhientai
+            rs.giaidoansau = rs3[0].giaidoansau
+            rs.giaidoanhientai_id  = rs3[0].giaidoanhientai_id
+            rs.giaidoansau_id = rs3[0].giaidoansau_id
         }
         rs.ListViTri = rs2
         res.json(rs);
@@ -89,7 +95,7 @@ module.exports = (router) => {
         else{
 
  
-            let sql5 = 'UPDATE td_chiendich SET ten_chiendich="'+req.body.ten_chiendich+'",ngay_batdau= DATE("'+(req.body.ngay_batdau)+'")+1,ngay_ketthuc=DATE("'+(req.body.ngay_ketthuc)+'")+1,trangthai="'+req.body.trangthai+'",mota="'+req.body.mota+'" WHERE chiendich_id ="'+req.body.chiendich_id +'"'
+            let sql5 = 'UPDATE td_chiendich SET ten_chiendich="'+req.body.ten_chiendich+'",ngay_batdau= STR_TO_DATE("'+ (req.body.ngay_batdau) +'", "%d/%m/%Y"),ngay_ketthuc=STR_TO_DATE("'+ (req.body.ngay_ketthuc)+'", "%d/%m/%Y"),trangthai="'+req.body.trangthai+'",mota="'+req.body.mota+'" WHERE chiendich_id ="'+req.body.chiendich_id +'"'
             let rs5 = await dbs.execute(sql5);
 
             if(rs5.affectedRows > 0){
@@ -118,7 +124,7 @@ module.exports = (router) => {
     router.post('/add',  (req, res) => {
         let sql = ''
         req.body.ungvien.map( async u => {
-            sql = 'INSERT INTO td_map_ungvien_vitri (ungvien_id, vitri_id, chiendich_id, giaidoan, status) VALUES ("'+ u.ungvien_id+'","'+req.body.vitri_id+'","'+req.body.chiendich_id+'", "1","1")'
+            sql = 'INSERT INTO td_map_ungvien_vitri (ungvien_id, vitri_id, chiendich_id, giaidoan, status, createdate) VALUES ("'+ u.ungvien_id+'","'+req.body.vitri_id+'","'+req.body.chiendich_id+'", "1","1",now())'
             let rs = await dbs.execute(sql)
             if(rs.affectedRows == 0){
                 res.json({status: false, message: 'lưu lỗi'})
@@ -147,79 +153,7 @@ module.exports = (router) => {
         }
     });
 
-    router.post('/tranfer', async (req, res) => {
-        // create reusable transporter object using the default SMTP transport
-        let sql = 'update td_chiendich set giaidoan = "' + req.body.giaidoansau_id +'" where chiendich_id = "' + req.body.chiendich_id + '"'
-        let rs1 = await dbs.execute(sql);
-        if (rs1.affectedRows == 0){
-            res.json({status:false, message: error })
-        }
-
-        let mailpass = ''
-        let mailfalse = ''
-        await req.body.UngVien.map(async u => {
-            if(u.pass == 1){
-                if(mailpass == ''){
-                    mailpass += u.email
-                }else{
-                    mailpass = mailpass + ',' + u.email
-                }
-            }
-            else{
-                if(mailfalse == ''){
-                    mailfalse += u.email
-                }else{
-                    mailfalse = mailfalse + ',' + u.email
-                }
-            }
-            let sql2 = 'INSERT INTO td_map_ungvien_vitri (ungvien_id, vitri_id, chiendich_id, GiaiDoan, Status, note) VALUES ("' + u.ungvien_id +'", "' + u.vitri_id + '", "' + req.body.chiendich_id + '", "' + req.body.giaidoansau_id + '", "' + u.pass + '", "' + u.note + '")'
-            await dbs.execute(sql2);
-        })
-        let transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-              user: 'tdhoang96',
-              pass: 'giongnhuid0'
-            }
-        });
-
-        let contentPass = "<b>Bạn đã vượt qua " + req.body.giaidoanhientai + " của " +  req.body.ten_chiendich + "</b><br>" 
-        contentPass += "<p>Hẹn gặp lại bạn trong " + req.body.giaidoansau + " của " + req.body.ten_chiendich + " chi tiết như sau :</p> "
-        contentPass += "<p> thời gian: " + req.body.ngayhen + "</p>"
-        contentPass += "<p> địa điểm: " + req.body.diadiemhen + "</p>"
-
-        let contentFalse = "<b>Bạn đã dừng lại tại " + req.body.giaidoanhientai + " của " +  req.body.ten_chiendich + "</b><br>" 
-        contentFalse += "<p>Hẹn gặp lại bạn trong các chiến dịch tuyển dụng khác. Chân thành cảm ơn bạn ! </p> "
-
-        // send mail with defined transport objec
-        transporter.sendMail({
-          from: '"tdhoang96" <tdhoang96@gmail.com>', // sender address
-          to: mailpass, // list of receivers
-          subject: "Thông báo tuyển dụng", // Subject line
-          text: "Hello world?", // plain text body
-          html: contentPass // html body
-        },(error,info)=>{
-            if(error){
-                res.json({status:false, message: error })
-            }
-         
-        });
-
-        transporter.sendMail({
-            from: '"tdhoang96" <tdhoang96@gmail.com>', // sender address
-            to: mailfalse, // list of receivers
-            subject: "Thông báo tuyển dụng", // Subject line
-            text: "Hello world?", // plain text body
-            html: contentFalse // html body
-          },(error,info)=>{
-              if(error){
-                  res.json({status:false, message: error })
-              }
-           
-          });
-
-        res.json({status:true, message: "thanh cong"})
-        });
+   
 
         router.get('/chung/analysis/', async (req, res) => {
             result = {}

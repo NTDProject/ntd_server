@@ -13,7 +13,11 @@ module.exports = (router) => {
         let rs = await dbs.execute('select * from td_dm_giaidoan');
         res.json(rs);
     });
-
+    router.get('/getallminusgiaidoan/:giaidoan', async (req, res) => {
+    let sql = 'select * from td_dm_giaidoan where giaidoan not in ("'+ req.params.giaidoan+'")'
+        let rs = await dbs.execute(sql);
+        res.json(rs)
+    });
     router.post('/save', async (req, res) => {
         if(req.body.GiaiDoan == "addPage"){
             let rs = await dbs.execute('INSERT INTO td_dm_giaidoan(Ten_GiaiDoan, Note) VALUES ("' + req.body.Ten_GiaiDoan + '", "' + req.body.Note + '")');
@@ -37,8 +41,8 @@ module.exports = (router) => {
         let rs = await dbs.execute('select count(*) tong FROM td_map_ungvien_vitri WHERE giaidoan = "' + req.body.GiaiDoan +'"');
         if(rs[0].tong > 0){
             res.json({status: false, message: "Đã có chiến dịch sử dụng giai đoạn, không được xoá"})
-        }else if(req.body.GiaiDoan == 4 || req.body.GiaiDoan == 1 ){
-            res.json({status: false, message: "Không được xoá 2 giai đoạn mặc định là bắt đầu và kết thúc"})
+        }else if(req.body.GiaiDoan == 4 || req.body.GiaiDoan == 1 || req.body.GiaiDoan == 9 ){
+            res.json({status: false, message: "Không được xóa giai đoạn mặc định"})
         }
         else{
             let rs = await dbs.execute('DELETE FROM td_dm_giaidoan WHERE giaidoan = "' + req.body.GiaiDoan +'"');
