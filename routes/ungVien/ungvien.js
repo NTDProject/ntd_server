@@ -45,7 +45,7 @@ module.exports = (router) => {
     });
 
     router.post('/deleteUngVienOfChienDich/', async (req, res) => {
-        let sql ='DELETE FROM td_map_ungvien_vitri WHERE ungvien_id = "' + req.body.ungvien_id + '" and chiendich_id =  "' + req.body.chiendich_id + '"'
+        let sql ='DELETE FROM td_map_ungvien_vitri WHERE ungvien_id = "' + req.body.ungvien_id + '" and chiendich_id =  "' + req.body.chiendich_id + '" and vitri_id = "' + req.body.vitri_id +'"'
         let rs= await dbs.execute(sql)
         if(rs.affectedRows > 0){
             return res.json({status: true, message: 'Xoá ứng viên khỏi chiến dịch thành công'})

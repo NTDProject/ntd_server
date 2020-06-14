@@ -17,11 +17,10 @@ module.exports = (router) => {
     router.get('/:chiendich_id', async (req, res) => {
         let sql = ''
         let sql2 = 'select c.ten_chiendich,c.mota,DATE_FORMAT(c.ngay_batdau, "%Y-%m-%d") ngay_batdau, DATE_FORMAT(c.ngay_ketthuc, "%Y-%m-%d") ngay_ketthuc,g.giaidoan giaidoanhientai_id, g.ten_giaidoan giaidoanhientai, (select h.ten_giaidoan from td_dm_giaidoan h where c.giaidoan+1 = h.giaidoan) giaidoansau, (select h.giaidoan from td_dm_giaidoan h where c.giaidoan+1 = h.giaidoan) giaidoansau_id from td_chiendich c, td_dm_giaidoan g where c.giaidoan = g.giaidoan and chiendich_id = "' + req.params.chiendich_id + '"'
-        console.log(sql2)
+        let sql3 = 'select u.ungvien_id,u.tenungvien,u.email,c.chiendich_id,c.ten_chiendich,v.vitri_id,v.ten_vitri,d.giaidoan,d.ten_giaidoan from td_ungvien u, td_dm_vitri v, td_chiendich c, (select DISTINCT vitri_id, chiendich_id, ungvien_id, giaidoan  from td_map_ungvien_vitri where status = 1) m, td_dm_giaidoan d where u.ungvien_id=m.ungvien_id and v.vitri_id=m.vitri_id and c.chiendich_id=m.chiendich_id and d.giaidoan = m.giaidoan and m.chiendich_id = "' + req.params.chiendich_id + '"'
         var rs = {};
         if(req.params.chiendich_id == 'addPage'){
             sql = 'select v.vitri_id, v.ten_vitri, v.mota, 0 soluong from td_dm_vitri v'
-            
         }
         else{
             sql = 'select v.vitri_id, v.ten_vitri, v.mota, CASE WHEN sum(m.soluong) is null then 0 else sum(m.soluong) end soluong from td_dm_vitri v LEFT JOIN td_map_chiendich_vitri m on v.vitri_id = m.vitri_id and m.chiendich_id = "' + req.params.chiendich_id + '" GROUP by v.vitri_id, v.ten_vitri, v.mota'
@@ -48,6 +47,13 @@ module.exports = (router) => {
             rs.giaidoansau = rs3[0].giaidoansau
             rs.giaidoanhientai_id  = rs3[0].giaidoanhientai_id
             rs.giaidoansau_id = rs3[0].giaidoansau_id
+        }
+        if(req.params.chiendich_id == 'addPage'){
+            rs.ListUV = []
+        }
+        else{
+            let rs4 = await dbs.execute(sql3);
+            rs.ListUV = rs4
         }
         rs.ListViTri = rs2
         res.json(rs);
