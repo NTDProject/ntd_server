@@ -27,6 +27,12 @@ module.exports = (router) => {
             
         }
         let rs2 = await dbs.execute(sql);
+
+        const asyncRes = await Promise.all(rs2.map(async (vt,index) => {
+            let sql100 = 'select m.*, y.nd_yeucau, 1 checkYC from td_map_chiendich_vitri_yeucau m, td_dm_yeucau y where y.yeucau_id = m.yeucau_id and chiendich_id = "' + req.params.chiendich_id + '" and vitri_id = "' + vt.vitri_id + '" UNION select yeucau_id,"'+req.params.chiendich_id+'" chiendich_id,"'+vt.vitri_id+'" vitri_id, nd_yeucau, 0 checkYC from td_dm_yeucau y where   y.yeucau_id not in (select y.yeucau_id checkYC from td_map_chiendich_vitri_yeucau m, td_dm_yeucau y where y.yeucau_id = m.yeucau_id and chiendich_id = "' + req.params.chiendich_id + '" and vitri_id = "' + vt.vitri_id + '")'
+            console.log(sql100)
+            rs2[index].yeucau =  await dbs.execute(sql100);
+        }));
         if(req.params.chiendich_id == 'addPage'){
             rs.ten_chiendich = ''
             rs.ngay_batdau = (new Date()).getFullYear() + "-" + ((new Date()).getMonth() +1) + "-" + ((new Date()).getDate())
@@ -68,13 +74,9 @@ module.exports = (router) => {
     //update chiến dịch
     router.post('/save', async (req, res) => {
         let id = uniqid()
-         console.log(req.body.ngay_batdau)
-         console.log(req.body.ngay_ketthuc)
         if(req.body.chiendich_id == "addPage")
         {
             
-            let sql3 = 'delete FROM td_chiendich WHERE chiendich_id = "' + id + '"'
-            let sql4 = 'delete FROM td_map_chiendich_vitri WHERE chiendich_id = "' + id + '"'
             let sql = 'INSERT INTO td_chiendich(chiendich_id, ten_chiendich, ngay_batdau, ngay_ketthuc, trangthai, mota, giaidoan) VALUES ("'+id+ '", "' +req.body.ten_chiendich+'", STR_TO_DATE("'+ (req.body.ngay_batdau) +'", "%d/%m/%Y"), STR_TO_DATE("'+ (req.body.ngay_ketthuc)+'", "%d/%m/%Y"), "'+req.body.trangthai+'", "'+req.body.mota + '", "1" )'
             let rs1 = await dbs.execute(sql);
             if(rs1.affectedRows > 0){
@@ -83,17 +85,22 @@ module.exports = (router) => {
                         sql2 = 'INSERT INTO td_map_chiendich_vitri (chiendich_id, vitri_id, soluong) VALUES ("'+ id +'","'+v.vitri_id+'","'+v.soluong+'")'
                         let rs2 =  dbs.execute(sql2);
                         if(rs2.affectedRows = 0){
-                            
-                             dbs.execute(sql3);
-                             dbs.execute(sql4);
                             res.json({status: false, message:"Luu vi tri sai"})
                         }
+                        v.yeucau.map(y => {
+                            if(y.checkYC > 0){
+                                sql200 = 'INSERT INTO td_map_chiendich_vitri_yeucau(yeucau_id, chiendich_id, vitri_id) VALUES ("'+y.yeucau_id+'", "'+id+'", "'+v.vitri_id+'")'
+                                let rs200 =  dbs.execute(sql200);
+                                if(rs200.affectedRows = 0){
+                                    res.json({status: false, message:"Luu yeu cau sai"})
+                                }
+                            }
+                        })
+                        
                     }
                 })
             }
             else{
-                 dbs.execute(sql3);
-                 dbs.execute(sql4);
                 res.json({status: false, message:"Luu chien dich sai"})
             }
             
@@ -105,7 +112,9 @@ module.exports = (router) => {
             let rs5 = await dbs.execute(sql5);
 
             if(rs5.affectedRows > 0){
+                let sql600 = 'delete FROM td_map_chiendich_vitri_yeucau WHERE chiendich_id = "' + req.body.chiendich_id + '"'
                 let sql6 = 'delete FROM td_map_chiendich_vitri WHERE chiendich_id = "' + req.body.chiendich_id + '"'
+                await dbs.execute(sql600);
                 await dbs.execute(sql6);
                 req.body.ListViTri.map(v => {
                     if(v.soluong != 0){
@@ -115,7 +124,17 @@ module.exports = (router) => {
                         if(rs7.affectedRows = 0){
                             res.json({status: false, message:"luu vi tri sai"})
                         }
+                        v.yeucau.map(y => {
+                        if(y.checkYC > 0){
+                            sql200 = 'INSERT INTO td_map_chiendich_vitri_yeucau(yeucau_id, chiendich_id, vitri_id) VALUES ("'+y.yeucau_id+'", "'+req.body.chiendich_id+'", "'+v.vitri_id+'")'
+                            let rs200 =  dbs.execute(sql200);
+                            if(rs200.affectedRows = 0){
+                                res.json({status: false, message:"Luu yeu cau sai"})
+                            }
+                        }
+                        })
                     }
+
                 })
             }
             else{

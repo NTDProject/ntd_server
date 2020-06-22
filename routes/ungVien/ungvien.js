@@ -30,6 +30,10 @@ module.exports = (router) => {
             rs3 = await dbs.execute('select x.*, case when (x.vitri_id in (select vitri_id from td_map_ungvien_vitri where chiendich_id ="'+ req.params.chiendich_id + '" and ungvien_id = "'+req.params.ungvien_id+'")) then 1 else 0 end checkapp from (select v.* from td_dm_vitri v, td_map_chiendich_vitri m where m.vitri_id = v.vitri_id and m.chiendich_id ="'+ req.params.chiendich_id + '")x')
         }
         rs.ListViTri = rs3
+        const asyncRes = await Promise.all(rs3.map(async (vt,index) => {
+            let sql100 = 'select m.ungvien_id, m.chiendich_id, m.vitri_id, m.yeucau_id, y.nd_yeucau, 1 checkYC from td_map_ungvien_chiendich_vitri_yeucau m, td_dm_yeucau y where y.yeucau_id = m.yeucau_id and ungvien_id = "'+req.params.ungvien_id+'" and chiendich_id = "'+req.params.chiendich_id +'" and vitri_id = "'+vt.vitri_id+'" union select "'+req.params.ungvien_id+'" ungvien_id, m2.chiendich_id, m2.vitri_id, m2.yeucau_id, y.nd_yeucau, 0 checkYC from td_map_chiendich_vitri_yeucau m2, td_dm_yeucau y where y.yeucau_id = m2.yeucau_id and chiendich_id = "'+req.params.chiendich_id+'" and vitri_id = "'+vt.vitri_id+'" and m2.yeucau_id not in(select yeucau_id from td_map_ungvien_chiendich_vitri_yeucau where ungvien_id = "'+req.params.ungvien_id+'" and chiendich_id = "'+req.params.chiendich_id+'" and vitri_id = "'+vt.vitri_id+'")'
+            rs3[index].yeucau =  await dbs.execute(sql100);
+        }));
         res.json(rs);
     });
 
@@ -99,7 +103,7 @@ module.exports = (router) => {
     router.post('/saveUvVtCd', async (req, res) => {
         let id = uniqid()
         if(req.body.ungvien_id == "addPage"){
-            let sql = 'INSERT INTO td_ungvien (ungvien_id, tenungvien, email) VALUES ("'+id+'","'+req.body.ten_ungvien+'","'+req.body.email+'")'
+            let sql = 'INSERT INTO td_ungvien (ungvien_id, tenungvien, email, sdt) VALUES ("'+id+'","'+req.body.ten_ungvien+'","'+req.body.email+'","'+req.body.sdt+'")'
             console.log(sql)
             let rs1 = await dbs.execute(sql);
             if(rs1.affectedRows > 0){
@@ -110,6 +114,12 @@ module.exports = (router) => {
                         await dbs.execute(sql2);
                         res.json({status:false, message: "Lưu vị trí sai"})
                     }
+                    v.yeucau.map(y => {
+                        if(y.checkYC > 0){
+                        let sql300 = 'INSERT INTO td_map_ungvien_chiendich_vitri_yeucau(ungvien_id, chiendich_id, vitri_id, yeucau_id) VALUES ("'+id+'","'+req.body.chiendich_id+'","'+v.vitri_id+'","'+y.yeucau_id+'")'
+                        let rs200 =  dbs.execute(sql300);
+                        }
+                    })
                 })
             }
             else{
