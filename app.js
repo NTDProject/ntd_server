@@ -11,6 +11,7 @@ var chienDichRouter = require('./routes/chienDich');
 var ungVienRouter = require('./routes/ungVien');
 var chiPhiRouter = require('./routes/ChiPhi');
 var giaiDoanRouter = require('./routes/giaiDoan');
+var yeuCauRouter = require('./routes/YeuCau');
 var viTriRouter = require('./routes/viTri');
 
 var app = express();
@@ -32,6 +33,7 @@ app.use('/chiendich', chienDichRouter);
 app.use('/ungvien', ungVienRouter);
 app.use('/chiphi', chiPhiRouter);
 app.use('/giaidoan', giaiDoanRouter);
+app.use('/yeucau', yeuCauRouter);
 app.use('/vitri', viTriRouter);
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
