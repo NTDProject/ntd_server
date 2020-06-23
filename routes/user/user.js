@@ -1,7 +1,7 @@
 const dbs = require('../../utils/dbs');
 const auth = require('../../utils/auth');
 const { check, validationResult, body } = require('express-validator');
-const bcrypt = require('bcrypt');
+const bcryptjs = require('bcryptjs');
 /* Authentication */
 
 
@@ -28,11 +28,11 @@ module.exports = (router) => {
                 res.json({ errors: errors.array() });
             } else {
                 const saltRounds = 10;
-                let salt = bcrypt.genSaltSync(saltRounds);
-                let passencode = bcrypt.hashSync(req.body.pass, salt);
-                let newpassencode = bcrypt.hashSync(req.body.newpass, salt);
+                let salt = bcryptjs.genSaltSync(saltRounds);
+                let passencode = bcryptjs.hashSync(req.body.pass, salt);
+                let newpassencode = bcryptjs.hashSync(req.body.newpass, salt);
                 let user = await dbs.execute('select *  from td_user where username = ? ', [req.body.username])
-                let rs1  = bcrypt.compareSync(req.body.pass, user[0].password); 
+                let rs1  = bcryptjs.compareSync(req.body.pass, user[0].password); 
                 if (!rs1) {
                     res.json({ errors: [{msg:'Sai mật khẩu cũ'}] });
                 }

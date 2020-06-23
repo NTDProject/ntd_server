@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const dbs = require('../../utils/dbs');
 const { check, validationResult, body } = require('express-validator');
-const bcrypt = require('bcrypt');
+const bcryptjs = require('bcryptjs');
 const privateRouteUser = require('./user');
 const nodemailer = require("nodemailer");
 /* Add User */
@@ -26,8 +26,8 @@ router.post('/', [
         } else {
             let passgen = Math.floor(Math.random()*(999999-100000))
             const saltRounds = 10;
-            let salt = bcrypt.genSaltSync(saltRounds);
-            let pass = bcrypt.hashSync(passgen.toString(), salt);
+            let salt = bcryptjs.genSaltSync(saltRounds);
+            let pass = bcryptjs.hashSync(passgen.toString(), salt);
             let sql = `insert into td_user(username, password, chucvu_id, bophan_id, trangthai, email ) values(?, ?, ?, ?, ?, ?)`;       
             let bind = [req.body.name, pass, 1, 1, 1, req.body.email];
             let rs = await dbs.execute(sql, bind);
