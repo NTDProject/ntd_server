@@ -51,12 +51,12 @@ module.exports = (router) => {
     router.post('/getUngVienByViTriChienDichYeuCau', async (req, res) => {
         let sql = ''
         if(req.body.yeucau.length < 1){
-            sql ='select u.ungvien_id,u.tenungvien,u.email,c.chiendich_id,c.ten_chiendich,v.vitri_id,v.ten_vitri,d.giaidoan,d.ten_giaidoan from td_ungvien u, td_dm_vitri v, td_chiendich c, (select DISTINCT vitri_id, chiendich_id, ungvien_id, giaidoan  from td_map_ungvien_vitri where status = 1) m, td_dm_giaidoan d where u.ungvien_id=m.ungvien_id and v.vitri_id=m.vitri_id and c.chiendich_id=m.chiendich_id and d.giaidoan = m.giaidoan and m.chiendich_id = "' + req.body.chiendich_id + '" and m.vitri_id = "'+req.body.vitri_id+'"'
+            sql ='select u.ungvien_id,u.tenungvien,u.email,c.chiendich_id,c.ten_chiendich,v.vitri_id,v.ten_vitri,d.giaidoan,d.ten_giaidoan, (case when d.giaidoan = 4 then "Pass" when d.giaidoan = 9 then "False" else "Process" end) trangthai from td_ungvien u, td_dm_vitri v, td_chiendich c, (select DISTINCT vitri_id, chiendich_id, ungvien_id, giaidoan  from td_map_ungvien_vitri where status = 1) m, td_dm_giaidoan d where u.ungvien_id=m.ungvien_id and v.vitri_id=m.vitri_id and c.chiendich_id=m.chiendich_id and d.giaidoan = m.giaidoan and m.chiendich_id = "' + req.body.chiendich_id + '" and m.vitri_id = "'+req.body.vitri_id+'"'
         }else {
-            sql ='select u.ungvien_id,u.tenungvien,u.email,c.chiendich_id,c.ten_chiendich,v.vitri_id,v.ten_vitri,d.giaidoan,d.ten_giaidoan from td_ungvien u, td_dm_vitri v, td_chiendich c, (select DISTINCT vitri_id, chiendich_id, ungvien_id, giaidoan  from td_map_ungvien_vitri where status = 1) m,td_map_ungvien_chiendich_vitri_yeucau m2, td_dm_giaidoan d where m2.chiendich_id = m.chiendich_id and m2.vitri_id= m.chiendich_id and m2.ungvien_id = m.ungvien_id and u.ungvien_id=m.ungvien_id and v.vitri_id=m.vitri_id and c.chiendich_id=m.chiendich_id and d.giaidoan = m.giaidoan and m.chiendich_id = "' + req.body.chiendich_id + '" and m.vitri_id = "'+req.body.vitri_id+'" and m2.yeucau_id = "'+req.body.yeucau[0]+'"'
+            sql ='select u.ungvien_id,u.tenungvien,u.email,c.chiendich_id,c.ten_chiendich,v.vitri_id,v.ten_vitri,d.giaidoan,d.ten_giaidoan, (case when d.giaidoan = 4 then "Pass" when d.giaidoan = 9 then "False" else "Process" end) trangthai from td_ungvien u, td_dm_vitri v, td_chiendich c, (select DISTINCT vitri_id, chiendich_id, ungvien_id, giaidoan  from td_map_ungvien_vitri where status = 1) m,td_map_ungvien_chiendich_vitri_yeucau m2, td_dm_giaidoan d where m2.chiendich_id = m.chiendich_id and m2.vitri_id= m.chiendich_id and m2.ungvien_id = m.ungvien_id and u.ungvien_id=m.ungvien_id and v.vitri_id=m.vitri_id and c.chiendich_id=m.chiendich_id and d.giaidoan = m.giaidoan and m.chiendich_id = "' + req.body.chiendich_id + '" and m.vitri_id = "'+req.body.vitri_id+'" and m2.yeucau_id = "'+req.body.yeucau[0]+'"'
             req.body.yeucau.map(yc => {
                 if(yc !== req.body.yeucau[0]){
-                    sql = sql + 'INTERSECT select u.ungvien_id,u.tenungvien,u.email,c.chiendich_id,c.ten_chiendich,v.vitri_id,v.ten_vitri,d.giaidoan,d.ten_giaidoan from td_ungvien u, td_dm_vitri v, td_chiendich c, (select DISTINCT vitri_id, chiendich_id, ungvien_id, giaidoan  from td_map_ungvien_vitri where status = 1) m,td_map_ungvien_chiendich_vitri_yeucau m2, td_dm_giaidoan d where m2.chiendich_id = m.chiendich_id and m2.vitri_id= m.chiendich_id and m2.ungvien_id = m.ungvien_id and u.ungvien_id=m.ungvien_id and v.vitri_id=m.vitri_id and c.chiendich_id=m.chiendich_id and d.giaidoan = m.giaidoan and m.chiendich_id = "' + req.body.chiendich_id + '" and m.vitri_id = "'+req.body.vitri_id+'" and m2.yeucau_id = "'+req.body.yeucau[0]+'"'
+                    sql = sql + 'INTERSECT select u.ungvien_id,u.tenungvien,u.email,c.chiendich_id,c.ten_chiendich,v.vitri_id,v.ten_vitri,d.giaidoan,d.ten_giaidoan, (case when d.giaidoan = 4 then "Pass" when d.giaidoan = 9 then "False" else "Process" end) trangthai from td_ungvien u, td_dm_vitri v, td_chiendich c, (select DISTINCT vitri_id, chiendich_id, ungvien_id, giaidoan  from td_map_ungvien_vitri where status = 1) m,td_map_ungvien_chiendich_vitri_yeucau m2, td_dm_giaidoan d where m2.chiendich_id = m.chiendich_id and m2.vitri_id= m.chiendich_id and m2.ungvien_id = m.ungvien_id and u.ungvien_id=m.ungvien_id and v.vitri_id=m.vitri_id and c.chiendich_id=m.chiendich_id and d.giaidoan = m.giaidoan and m.chiendich_id = "' + req.body.chiendich_id + '" and m.vitri_id = "'+req.body.vitri_id+'" and m2.yeucau_id = "'+req.body.yeucau[0]+'"'
                 }
             })
         }
@@ -78,9 +78,12 @@ module.exports = (router) => {
 
 
     router.post('/history', async (req, res) => {
+        let sql100 = 'select m.ungvien_id, m.chiendich_id, m.vitri_id, m.yeucau_id, y.nd_yeucau, 1 checkYC from td_map_ungvien_chiendich_vitri_yeucau m, td_dm_yeucau y where y.yeucau_id = m.yeucau_id and ungvien_id = "'+req.body.ungVienID+'" and chiendich_id = "'+req.body.chienDichID +'" and vitri_id = "'+req.body.viTriID+'" union select "'+req.body.ungVienID+'" ungvien_id, m2.chiendich_id, m2.vitri_id, m2.yeucau_id, y.nd_yeucau, 0 checkYC from td_map_chiendich_vitri_yeucau m2, td_dm_yeucau y where y.yeucau_id = m2.yeucau_id and chiendich_id = "'+req.body.chienDichID+'" and vitri_id = "'+req.body.viTriID+'" and m2.yeucau_id not in(select yeucau_id from td_map_ungvien_chiendich_vitri_yeucau where ungvien_id = "'+req.body.ungVienID+'" and chiendich_id = "'+req.body.chienDichID+'" and vitri_id = "'+req.body.viTriID+'")'
         let sql ='select m.status, m.note,g.giaidoan, g.ten_giaidoan,m.diem, DATE_FORMAT(m.createdate, "%d/%m/%Y") createdate from td_dm_giaidoan g, td_map_ungvien_vitri m where g.giaidoan = m.giaidoan and m.chiendich_id = "' + req.body.chienDichID + '" and m.ungvien_id ="' + req.body.ungVienID +'" and m.vitri_id = "' + req.body.viTriID +'"'
         console.log(sql)
-        let rs = await dbs.execute(sql)
+        let rs ={}
+        rs.ls= await dbs.execute(sql)
+        rs.yc= await dbs.execute(sql100);
         res.json(rs);
     });
 
@@ -106,7 +109,15 @@ module.exports = (router) => {
 
     router.post('/save', async (req, res) => {
             let sql = 'Update td_ungvien set tenungvien = "'+req.body.ten_ungvien+'", email = "'+ req.body.email+'" where ungvien_id = "'+req.body.ungvien_id+'"'
+            let sql2 = 'DELETE FROM td_map_ungvien_chiendich_vitri_yeucau WHERE chiendich_id = "' + req.body.chiendich_id + '" and vitri_id = "'+req.body.vitri_id+'" and ungvien_id ="'+req.body.ungvien_id+'"'
+            console.log(sql2)
+            await dbs.execute(sql2);
             let rs = await dbs.execute(sql);
+            req.body.yc.map(y => {
+                let sql3 = 'INSERT INTO td_map_ungvien_chiendich_vitri_yeucau(ungvien_id, chiendich_id, vitri_id, yeucau_id) VALUES ("'+req.body.ungvien_id+'","'+req.body.chiendich_id+'","'+req.body.vitri_id+'","'+y.yeucau_id+'")'
+                console.log(sql3)
+                dbs.execute(sql3);
+            })
             if(rs.affectedRows > 0){
                 res.json({status:true, message: "Lưu thành công"})
             }

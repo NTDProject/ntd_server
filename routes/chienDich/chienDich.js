@@ -17,7 +17,8 @@ module.exports = (router) => {
     router.get('/:chiendich_id', async (req, res) => {
         let sql = ''
         let sql2 = 'select c.ten_chiendich,c.mota,DATE_FORMAT(c.ngay_batdau, "%Y-%m-%d") ngay_batdau, DATE_FORMAT(c.ngay_ketthuc, "%Y-%m-%d") ngay_ketthuc,g.giaidoan giaidoanhientai_id, g.ten_giaidoan giaidoanhientai, (select h.ten_giaidoan from td_dm_giaidoan h where c.giaidoan+1 = h.giaidoan) giaidoansau, (select h.giaidoan from td_dm_giaidoan h where c.giaidoan+1 = h.giaidoan) giaidoansau_id from td_chiendich c, td_dm_giaidoan g where c.giaidoan = g.giaidoan and chiendich_id = "' + req.params.chiendich_id + '"'
-        let sql3 = 'select u.ungvien_id,u.tenungvien,u.email,c.chiendich_id,c.ten_chiendich,v.vitri_id,v.ten_vitri,d.giaidoan,d.ten_giaidoan from td_ungvien u, td_dm_vitri v, td_chiendich c, (select DISTINCT vitri_id, chiendich_id, ungvien_id, giaidoan  from td_map_ungvien_vitri where status = 1) m, td_dm_giaidoan d where u.ungvien_id=m.ungvien_id and v.vitri_id=m.vitri_id and c.chiendich_id=m.chiendich_id and d.giaidoan = m.giaidoan and m.chiendich_id = "' + req.params.chiendich_id + '"'
+        let sql3 = 'select u.ungvien_id,u.tenungvien,u.email,c.chiendich_id,c.ten_chiendich,v.vitri_id,v.ten_vitri,d.giaidoan,d.ten_giaidoan, (case when d.giaidoan = 4 then "Pass" when d.giaidoan = 9 then "False" else "Process" end) trangthai from td_ungvien u, td_dm_vitri v, td_chiendich c, (select DISTINCT vitri_id, chiendich_id, ungvien_id, giaidoan  from td_map_ungvien_vitri where status = 1) m, td_dm_giaidoan d where u.ungvien_id=m.ungvien_id and v.vitri_id=m.vitri_id and c.chiendich_id=m.chiendich_id and d.giaidoan = m.giaidoan and m.chiendich_id = "' + req.params.chiendich_id + '"'
+        console.log(sql3)
         var rs = {};
         if(req.params.chiendich_id == 'addPage'){
             sql = 'select v.vitri_id, v.ten_vitri, v.mota, 0 soluong from td_dm_vitri v'
@@ -30,7 +31,6 @@ module.exports = (router) => {
 
         const asyncRes = await Promise.all(rs2.map(async (vt,index) => {
             let sql100 = 'select m.*, y.nd_yeucau, 1 checkYC from td_map_chiendich_vitri_yeucau m, td_dm_yeucau y where y.yeucau_id = m.yeucau_id and chiendich_id = "' + req.params.chiendich_id + '" and vitri_id = "' + vt.vitri_id + '" UNION select yeucau_id,"'+req.params.chiendich_id+'" chiendich_id,"'+vt.vitri_id+'" vitri_id, nd_yeucau, 0 checkYC from td_dm_yeucau y where   y.yeucau_id not in (select y.yeucau_id checkYC from td_map_chiendich_vitri_yeucau m, td_dm_yeucau y where y.yeucau_id = m.yeucau_id and chiendich_id = "' + req.params.chiendich_id + '" and vitri_id = "' + vt.vitri_id + '")'
-            console.log(sql100)
             rs2[index].yeucau =  await dbs.execute(sql100);
         }));
         if(req.params.chiendich_id == 'addPage'){
