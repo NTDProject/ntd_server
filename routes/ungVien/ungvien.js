@@ -48,6 +48,23 @@ module.exports = (router) => {
         res.json(rs);
     });
 
+    router.post('/getUngVienByViTriChienDichYeuCau', async (req, res) => {
+        let sql = ''
+        if(req.body.yeucau.length < 1){
+            sql ='select u.ungvien_id,u.tenungvien,u.email,c.chiendich_id,c.ten_chiendich,v.vitri_id,v.ten_vitri,d.giaidoan,d.ten_giaidoan from td_ungvien u, td_dm_vitri v, td_chiendich c, (select DISTINCT vitri_id, chiendich_id, ungvien_id, giaidoan  from td_map_ungvien_vitri where status = 1) m, td_dm_giaidoan d where u.ungvien_id=m.ungvien_id and v.vitri_id=m.vitri_id and c.chiendich_id=m.chiendich_id and d.giaidoan = m.giaidoan and m.chiendich_id = "' + req.body.chiendich_id + '" and m.vitri_id = "'+req.body.vitri_id+'"'
+        }else {
+            sql ='select u.ungvien_id,u.tenungvien,u.email,c.chiendich_id,c.ten_chiendich,v.vitri_id,v.ten_vitri,d.giaidoan,d.ten_giaidoan from td_ungvien u, td_dm_vitri v, td_chiendich c, (select DISTINCT vitri_id, chiendich_id, ungvien_id, giaidoan  from td_map_ungvien_vitri where status = 1) m,td_map_ungvien_chiendich_vitri_yeucau m2, td_dm_giaidoan d where m2.chiendich_id = m.chiendich_id and m2.vitri_id= m.chiendich_id and m2.ungvien_id = m.ungvien_id and u.ungvien_id=m.ungvien_id and v.vitri_id=m.vitri_id and c.chiendich_id=m.chiendich_id and d.giaidoan = m.giaidoan and m.chiendich_id = "' + req.body.chiendich_id + '" and m.vitri_id = "'+req.body.vitri_id+'" and m2.yeucau_id = "'+req.body.yeucau[0]+'"'
+            req.body.yeucau.map(yc => {
+                if(yc !== req.body.yeucau[0]){
+                    sql = sql + 'INTERSECT select u.ungvien_id,u.tenungvien,u.email,c.chiendich_id,c.ten_chiendich,v.vitri_id,v.ten_vitri,d.giaidoan,d.ten_giaidoan from td_ungvien u, td_dm_vitri v, td_chiendich c, (select DISTINCT vitri_id, chiendich_id, ungvien_id, giaidoan  from td_map_ungvien_vitri where status = 1) m,td_map_ungvien_chiendich_vitri_yeucau m2, td_dm_giaidoan d where m2.chiendich_id = m.chiendich_id and m2.vitri_id= m.chiendich_id and m2.ungvien_id = m.ungvien_id and u.ungvien_id=m.ungvien_id and v.vitri_id=m.vitri_id and c.chiendich_id=m.chiendich_id and d.giaidoan = m.giaidoan and m.chiendich_id = "' + req.body.chiendich_id + '" and m.vitri_id = "'+req.body.vitri_id+'" and m2.yeucau_id = "'+req.body.yeucau[0]+'"'
+                }
+            })
+        }
+        console.log(sql)
+        let rs= await dbs.execute(sql)
+        res.json(rs);
+    });
+
     router.post('/deleteUngVienOfChienDich/', async (req, res) => {
         let sql ='DELETE FROM td_map_ungvien_vitri WHERE ungvien_id = "' + req.body.ungvien_id + '" and chiendich_id =  "' + req.body.chiendich_id + '" and vitri_id = "' + req.body.vitri_id +'"'
         let rs= await dbs.execute(sql)
@@ -61,7 +78,7 @@ module.exports = (router) => {
 
 
     router.post('/history', async (req, res) => {
-        let sql ='select m.status, m.note,g.giaidoan, g.ten_giaidoan, DATE_FORMAT(m.createdate, "%d/%m/%Y") createdate from td_dm_giaidoan g, td_map_ungvien_vitri m where g.giaidoan = m.giaidoan and m.chiendich_id = "' + req.body.chienDichID + '" and m.ungvien_id ="' + req.body.ungVienID +'" and m.vitri_id = "' + req.body.viTriID +'"'
+        let sql ='select m.status, m.note,g.giaidoan, g.ten_giaidoan,m.diem, DATE_FORMAT(m.createdate, "%d/%m/%Y") createdate from td_dm_giaidoan g, td_map_ungvien_vitri m where g.giaidoan = m.giaidoan and m.chiendich_id = "' + req.body.chienDichID + '" and m.ungvien_id ="' + req.body.ungVienID +'" and m.vitri_id = "' + req.body.viTriID +'"'
         console.log(sql)
         let rs = await dbs.execute(sql)
         res.json(rs);
@@ -161,7 +178,7 @@ module.exports = (router) => {
             }
         });
 
-        let sql1 = 'update td_map_ungvien_vitri set status = "'+ 0 +'", note = "'+ req.body.note +'" where ungvien_id = "'+req.body.ungvien_id+'" and vitri_id = "'+req.body.vitri_id+'" and chiendich_id = "'+req.body.chiendich_id+'" and status = "'+1+'"'
+        let sql1 = 'update td_map_ungvien_vitri set status = "'+ 0 +'", note = "'+ req.body.note +'", diem = "'+ req.body.diem +'" where ungvien_id = "'+req.body.ungvien_id+'" and vitri_id = "'+req.body.vitri_id+'" and chiendich_id = "'+req.body.chiendich_id+'" and status = "'+1+'"'
         let sql2 = 'INSERT INTO td_map_ungvien_vitri(ungvien_id, vitri_id, chiendich_id, GiaiDoan, Status, CreateDate) VALUES ("'+req.body.ungvien_id+'", "'+ req.body.vitri_id+'", "'+ req.body.chiendich_id +'", "'+ req.body.giaidoansau_id+'", "'+ 1 +'", now())' 
         await dbs.execute(sql1);
         await dbs.execute(sql2);
