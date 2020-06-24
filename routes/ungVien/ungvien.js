@@ -115,7 +115,6 @@ module.exports = (router) => {
             let rs = await dbs.execute(sql);
             req.body.yc.map(y => {
                 let sql3 = 'INSERT INTO td_map_ungvien_chiendich_vitri_yeucau(ungvien_id, chiendich_id, vitri_id, yeucau_id) VALUES ("'+req.body.ungvien_id+'","'+req.body.chiendich_id+'","'+req.body.vitri_id+'","'+y.yeucau_id+'")'
-                console.log(sql3)
                 dbs.execute(sql3);
             })
             if(rs.affectedRows > 0){
@@ -136,6 +135,7 @@ module.exports = (router) => {
             let rs1 = await dbs.execute(sql);
             if(rs1.affectedRows > 0){
                 req.body.ListViTri.map( async v => {
+                    if(v.checkapp>0){
                     let sql3 = 'INSERT INTO td_map_ungvien_vitri(ungvien_id, vitri_id, chiendich_id, giaidoan, status, createdate) VALUES ("' + id +'","'+v.vitri_id+'","'+req.body.chiendich_id+'", 1, 1, now())'
                     let rs2 = await dbs.execute(sql3);
                     if(rs2.affectedRows == 0){
@@ -148,7 +148,9 @@ module.exports = (router) => {
                         let rs200 =  dbs.execute(sql300);
                         }
                     })
+                }
                 })
+            
             }
             else{
                 res.json({status:false, message: "Lưu ứng viên sai"})
@@ -186,6 +188,8 @@ module.exports = (router) => {
             auth: {
               user: 'nguyet.httt.mta',
               pass: 'nguyetnga'
+            //   user: 'tdhoang96',
+            //   pass: 'giongnhuid0'
             }
         });
 
@@ -207,6 +211,7 @@ module.exports = (router) => {
         // send mail with defined transport objec
         transporter.sendMail({
           from: '"nguyet.httt.mta" <nguyet.httt.mta@gmail.com>', // sender address
+        //   from: '"tdhoang96" <tdhoang96@gmail.com>', // sender address
           to: req.body.email, // list of receivers
           subject: "Thông báo tuyển dụng", // Subject line
           text: "Hello world?", // plain text body

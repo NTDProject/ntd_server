@@ -20,10 +20,12 @@ router.post('/signin', async function (req, res) {
     if (user[0]) {
       let rs = bcryptjs.compareSync(password, user[0].password);   
       if (rs) {
+
         delete user[0].password;
-        let path = await dbs.execute('SELECT gp.path, gp.post, gp.get, gp.put, gp.del from user_permission gp where  gp.username =  ?',[username]);
+        console.log("pass")
+        // let path = await dbs.execute('SELECT gp.path, gp.post, gp.get, gp.put, gp.del from user_permission gp where  gp.username =  ?',[username]);
         var token = jwt.sign(JSON.parse(JSON.stringify(user[0])), config.secret, { expiresIn: config.expires });
-        res.json({ success: true, token: token, expires: new Date(Date.now() + config.expires * 1000), path: path });
+        res.json({ success: true, token: token, expires: new Date(Date.now() + config.expires * 1000), path: [] });
       } else {
         res.json({ success: false, msg: 'Sai Tên Đăng Nhập Hoặc Mật Khẩu !' });
       }
