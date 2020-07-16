@@ -182,7 +182,7 @@ module.exports = (router) => {
 
         router.get('/chung/analysis/', async (req, res) => {
             result = {}
-            let sql = 'select (select count(*) from td_chiendich) as sumChienDich, (select count(*) from td_ungvien) as sumUngVien, (select count(distinct ungvien_id) from td_map_ungvien_vitri where giaidoan = 0 and status = 1) as pass, (SELECT count(distinct ungvien_id) FROM `td_map_ungvien_vitri` m, td_chiendich c WHERE c.chiendich_id = m. chiendich_id and c.giaidoan != 0 and m.status = 1) process from dual'
+            let sql = 'select (select count(*) from td_chiendich) as sumChienDich, (select count(*) from td_ungvien) as sumUngVien, (select count(distinct ungvien_id) from td_map_ungvien_vitri where giaidoan = 4 and status = 1) as pass, (SELECT count(distinct ungvien_id) FROM `td_map_ungvien_vitri` m, td_chiendich c WHERE c.chiendich_id = m. chiendich_id and c.giaidoan not in (4,9) and m.status = 1) process, (select sum(sotien) from td_map_chiendich_chiphi) chiphi from dual'
             let rs = await dbs.execute(sql);
             
             let sql1 = 'select ten_vitri from td_dm_vitri order by vitri_id'
@@ -199,7 +199,7 @@ module.exports = (router) => {
                 listVTNC.push(b.soluong)
             })
             
-            let sql3 = 'select v.vitri_id, case when sum(m.status) is null then 0 else sum(m.status) end soluong from td_dm_vitri v left join td_map_ungvien_vitri m on m.vitri_id = v.vitri_id and giaidoan = 0 and status = 1 group by vitri_id'
+            let sql3 = 'select v.vitri_id, case when sum(m.status) is null then 0 else sum(m.status) end soluong from td_dm_vitri v left join td_map_ungvien_vitri m on m.vitri_id = v.vitri_id and giaidoan = 4 and status = 1 group by vitri_id'
             let rs3 = await dbs.execute(sql3);
             let listVTTT=[]
             const promises3 = rs3.map( c => {

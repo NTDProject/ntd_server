@@ -9,11 +9,17 @@ const nodemailer = require("nodemailer");
 router.post('/', [
     check('name', 'Username là trường bắt buộc').notEmpty(),
     check('email', 'Email là trường bắt buộc').notEmpty(),
-    check('phone', 'Số điện thoại là trường bắt buộc').notEmpty(),
+    check('group_id', 'Nhóm quyền là trường bắt buộc').notEmpty(),
     body('name').custom(async value => {
         let user = await dbs.execute('select * from td_user where username = ?', [value])
         if (user[0]) {
             return Promise.reject('Đã tồn tại username');
+        }
+    }),
+    body('email').custom(async value => {
+        let user = await dbs.execute('select * from td_user where email = ?', [value])
+        if (user[0]) {
+            return Promise.reject('Đã tồn tại email');
         }
     }),
 ], async (req, res) => {
@@ -28,27 +34,23 @@ router.post('/', [
             const saltRounds = 10;
             let salt = bcryptjs.genSaltSync(saltRounds);
             let pass = bcryptjs.hashSync(passgen.toString(), salt);
-            let sql = `insert into td_user(username, password, chucvu_id, bophan_id, trangthai, email ) values(?, ?, ?, ?, ?, ?)`;       
-            let bind = [req.body.name, pass, 1, 1, 1, req.body.email];
+            let sql = `insert into td_user(username, password, trangthai, email, group_id ) values(?, ?, ?, ?, ?)`;       
+            let bind = [req.body.name, pass, 1, 1, 1, req.body.email,req.body.group_id];
             let rs = await dbs.execute(sql, bind);
 
             let transporter = nodemailer.createTransport({
                 service: 'gmail',
                 auth: {
-                  user: 'tdhoang96',
-                  pass: 'giongnhuid0'
+                    user: 'nguyet.httt.mta',
+                    pass: 'nguyetnga'
                 }
             });
-
-
-
-
             let content = "<b>Bạn đã được cấp tài khoản truy cập hệ thống với thông tin truy cập như sau :</b><br>" 
             content += "<p>username :" + req.body.name + "</p>" 
             content += "<p>Password : " + passgen + "</p>"
             // send mail with defined transport objec
             transporter.sendMail({
-              from: '"tdhoang96" <tdhoang96@gmail.com>', // sender address
+              from: '"nguyet.httt.mta" <nguyet.httt.mta@gmail.com>', // sender address
               to: req.body.email, // list of receivers
               subject: "Thông báo thông tin tài khoản hệ thống NTD", // Subject line
               text: "", // plain text body

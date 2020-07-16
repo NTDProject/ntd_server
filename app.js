@@ -13,6 +13,7 @@ var chiPhiRouter = require('./routes/ChiPhi');
 var giaiDoanRouter = require('./routes/giaiDoan');
 var yeuCauRouter = require('./routes/YeuCau');
 var viTriRouter = require('./routes/viTri');
+var groupRouter = require('./routes/Group');
 
 var app = express();
 
@@ -35,6 +36,7 @@ app.use('/chiphi', chiPhiRouter);
 app.use('/giaidoan', giaiDoanRouter);
 app.use('/yeucau', yeuCauRouter);
 app.use('/vitri', viTriRouter);
+app.use('/group', groupRouter);
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));

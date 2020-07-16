@@ -22,7 +22,7 @@ module.exports = (router) => {
         if(req.params.ungvien_id =="addPage"){
             rs.tenungvien = "",
             rs.email = ""
-            rs3 = await dbs.execute('select v.*, 0 checkapp from td_dm_vitri v, td_map_chiendich_vitri m  where m.vitri_id = v.vitri_id and m.chiendich_id ="' + req.params.chiendich_id + '"')
+            rs3 = await dbs.execute('select a.*, case when b.dem is null then 0 else b.dem end dem from (select v.*, 0 checkapp, m.soluong from td_dm_vitri v, td_map_chiendich_vitri m where m.vitri_id = v.vitri_id and m.chiendich_id ="' + req.params.chiendich_id + '")a left join(select chiendich_id, vitri_id, count(ungvien_id) dem from td_map_ungvien_vitri where giaidoan = 4 and chiendich_id ="' + req.params.chiendich_id + '")b on a.vitri_id = b.vitri_id')
         }
         else{
             let rs2 = await dbs.execute('select u.* from td_ungvien u, td_map_ungvien_vitri m where m.ungvien_id = u.ungvien_id and u.ungvien_id = "'+ req.params.ungvien_id+'" and m.chiendich_id = "'+ req.params.chiendich_id +'"')
@@ -51,17 +51,19 @@ module.exports = (router) => {
     router.post('/getUngVienByViTriChienDichYeuCau', async (req, res) => {
         let sql = ''
         if(req.body.yeucau.length < 1){
-            sql ='select u.ungvien_id,u.tenungvien,u.email,c.chiendich_id,c.ten_chiendich,v.vitri_id,v.ten_vitri,d.giaidoan,d.ten_giaidoan, (case when d.giaidoan = 4 then "Pass" when d.giaidoan = 9 then "False" else "Process" end) trangthai from td_ungvien u, td_dm_vitri v, td_chiendich c, (select DISTINCT vitri_id, chiendich_id, ungvien_id, giaidoan  from td_map_ungvien_vitri where status = 1) m, td_dm_giaidoan d where u.ungvien_id=m.ungvien_id and v.vitri_id=m.vitri_id and c.chiendich_id=m.chiendich_id and d.giaidoan = m.giaidoan and m.chiendich_id = "' + req.body.chiendich_id + '" and m.vitri_id = "'+req.body.vitri_id+'"'
+            sql ='select u.ungvien_id,u.tenungvien,u.email,c.chiendich_id,c.ten_chiendich,v.vitri_id,v.ten_vitri,d.giaidoan,d.ten_giaidoan, (case when d.giaidoan = 4 then "Pass" when d.giaidoan = 9 then "False" else "Process" end) trangthai from td_ungvien u, td_dm_vitri v, td_chiendich c, (select DISTINCT vitri_id, chiendich_id, ungvien_id, giaidoan  from td_map_ungvien_vitri where status = 1) m, td_dm_giaidoan d where u.ungvien_id=m.ungvien_id and v.vitri_id=m.vitri_id and c.chiendich_id=m.chiendich_id and d.giaidoan = m.giaidoan and m.chiendich_id = "' + req.body.chiendich_id + '" and m.vitri_id = "'+req.body.vitri_id+'" minus select u.ungvien_id,u.tenungvien,u.email,c.chiendich_id,c.ten_chiendich,v.vitri_id,v.ten_vitri,d.giaidoan,d.ten_giaidoan, (case when d.giaidoan = 4 then "Pass" when d.giaidoan = 9 then "False" else "Process" end) trangthai from td_ungvien u, td_dm_vitri v, td_chiendich c, (select DISTINCT  ungvien_id, giaidoan  from td_map_ungvien_vitri where status = 1 and chiendich_id = "'+req.body.chiendich_id+'" and vitri_id = "'+req.body.vitri_id+'") m,td_map_ungvien_chiendich_vitri_yeucau m2, td_dm_giaidoan d where m.ungvien_id = m2.ungvien_id and u.ungvien_id=m2.ungvien_id and v.vitri_id=m2.vitri_id and c.chiendich_id=m2.chiendich_id and d.giaidoan = m.giaidoan and m2.chiendich_id = "' + req.body.chiendich_id + '" and m2.vitri_id = "'+req.body.vitri_id+'" and m2.yeucau_id = "'
         }else {
-            sql ='select u.ungvien_id,u.tenungvien,u.email,c.chiendich_id,c.ten_chiendich,v.vitri_id,v.ten_vitri,d.giaidoan,d.ten_giaidoan, (case when d.giaidoan = 4 then "Pass" when d.giaidoan = 9 then "False" else "Process" end) trangthai from td_ungvien u, td_dm_vitri v, td_chiendich c, (select DISTINCT  giaidoan  from td_map_ungvien_vitri where status = 1 and chiendich_id = "'+req.body.chiendich_id+'" and vitri_id = "'+req.body.vitri_id+'") m,td_map_ungvien_chiendich_vitri_yeucau m2, td_dm_giaidoan d where u.ungvien_id=m2.ungvien_id and v.vitri_id=m2.vitri_id and c.chiendich_id=m2.chiendich_id and d.giaidoan = m.giaidoan and m2.chiendich_id = "' + req.body.chiendich_id + '" and m2.vitri_id = "'+req.body.vitri_id+'" and m2.yeucau_id = "'+req.body.yeucau[0]+'"'
+            sql ='select u.ungvien_id,u.tenungvien,u.email,c.chiendich_id,c.ten_chiendich,v.vitri_id,v.ten_vitri,d.giaidoan,d.ten_giaidoan, (case when d.giaidoan = 4 then "Pass" when d.giaidoan = 9 then "False" else "Process" end) trangthai from td_ungvien u, td_dm_vitri v, td_chiendich c, (select DISTINCT  ungvien_id, giaidoan  from td_map_ungvien_vitri where status = 1 and chiendich_id = "'+req.body.chiendich_id+'" and vitri_id = "'+req.body.vitri_id+'") m,td_map_ungvien_chiendich_vitri_yeucau m2, td_dm_giaidoan d where m.ungvien_id = m2.ungvien_id and u.ungvien_id=m2.ungvien_id and v.vitri_id=m2.vitri_id and c.chiendich_id=m2.chiendich_id and d.giaidoan = m.giaidoan and m2.chiendich_id = "' + req.body.chiendich_id + '" and m2.vitri_id = "'+req.body.vitri_id+'" and m2.yeucau_id = "'+req.body.yeucau[0]+'"'
             req.body.yeucau.map(yc => {
                 if(yc !== req.body.yeucau[0]){
-                    sql = sql + ' INTERSECT select u.ungvien_id,u.tenungvien,u.email,c.chiendich_id,c.ten_chiendich,v.vitri_id,v.ten_vitri,d.giaidoan,d.ten_giaidoan, (case when d.giaidoan = 4 then "Pass" when d.giaidoan = 9 then "False" else "Process" end) trangthai from td_ungvien u, td_dm_vitri v, td_chiendich c, (select DISTINCT  giaidoan  from td_map_ungvien_vitri where status = 1 and chiendich_id = "'+req.body.chiendich_id+'" and vitri_id = "'+req.body.vitri_id+'") m,td_map_ungvien_chiendich_vitri_yeucau m2, td_dm_giaidoan d where u.ungvien_id=m2.ungvien_id and v.vitri_id=m2.vitri_id and c.chiendich_id=m2.chiendich_id and d.giaidoan = m.giaidoan and m2.chiendich_id = "' + req.body.chiendich_id + '" and m2.vitri_id = "'+req.body.vitri_id+'" and m2.yeucau_id = "'+yc+'"'
+                    sql = sql + ' INTERSECT select u.ungvien_id,u.tenungvien,u.email,c.chiendich_id,c.ten_chiendich,v.vitri_id,v.ten_vitri,d.giaidoan,d.ten_giaidoan, (case when d.giaidoan = 4 then "Pass" when d.giaidoan = 9 then "False" else "Process" end) trangthai from td_ungvien u, td_dm_vitri v, td_chiendich c, (select DISTINCT  ungvien_id,giaidoan  from td_map_ungvien_vitri where status = 1 and chiendich_id = "'+req.body.chiendich_id+'" and vitri_id = "'+req.body.vitri_id+'") m,td_map_ungvien_chiendich_vitri_yeucau m2, td_dm_giaidoan d where m.ungvien_id = m2.ungvien_id and u.ungvien_id=m2.ungvien_id and v.vitri_id=m2.vitri_id and c.chiendich_id=m2.chiendich_id and d.giaidoan = m.giaidoan and m2.chiendich_id = "' + req.body.chiendich_id + '" and m2.vitri_id = "'+req.body.vitri_id+'" and m2.yeucau_id = "'+yc+'"'
                 }
             })
+            
         }
         console.log(sql)
         let rs= await dbs.execute(sql)
+        
         res.json(rs);
     });
 
@@ -80,10 +82,13 @@ module.exports = (router) => {
     router.post('/history', async (req, res) => {
         let sql100 = 'select m.ungvien_id, m.chiendich_id, m.vitri_id, m.yeucau_id, y.nd_yeucau, 1 checkYC from td_map_ungvien_chiendich_vitri_yeucau m, td_dm_yeucau y where y.yeucau_id = m.yeucau_id and ungvien_id = "'+req.body.ungVienID+'" and chiendich_id = "'+req.body.chienDichID +'" and vitri_id = "'+req.body.viTriID+'" union select "'+req.body.ungVienID+'" ungvien_id, m2.chiendich_id, m2.vitri_id, m2.yeucau_id, y.nd_yeucau, 0 checkYC from td_map_chiendich_vitri_yeucau m2, td_dm_yeucau y where y.yeucau_id = m2.yeucau_id and chiendich_id = "'+req.body.chienDichID+'" and vitri_id = "'+req.body.viTriID+'" and m2.yeucau_id not in(select yeucau_id from td_map_ungvien_chiendich_vitri_yeucau where ungvien_id = "'+req.body.ungVienID+'" and chiendich_id = "'+req.body.chienDichID+'" and vitri_id = "'+req.body.viTriID+'")'
         let sql ='select m.status, m.note,g.giaidoan, g.ten_giaidoan,m.diem, DATE_FORMAT(m.createdate, "%d/%m/%Y") createdate from td_dm_giaidoan g, td_map_ungvien_vitri m where g.giaidoan = m.giaidoan and m.chiendich_id = "' + req.body.chienDichID + '" and m.ungvien_id ="' + req.body.ungVienID +'" and m.vitri_id = "' + req.body.viTriID +'"'
-        console.log(sql)
+        let sql200 = 'select a.*, case when b.dem is null then 0 else b.dem end dem from (select v.*, 0 checkapp, m.soluong from td_dm_vitri v, td_map_chiendich_vitri m where m.vitri_id = v.vitri_id and m.chiendich_id ="'+req.body.chienDichID +'")a left join(select chiendich_id, vitri_id, count(ungvien_id) dem from td_map_ungvien_vitri where giaidoan = 4 and chiendich_id ="'+req.body.chienDichID +'")b on a.vitri_id = b.vitri_id where a.vitri_id ="' + req.body.viTriID +'"'
         let rs ={}
+        let rs200 = await dbs.execute(sql200);
+        console.log(rs200[0])
         rs.ls= await dbs.execute(sql)
         rs.yc= await dbs.execute(sql100);
+        rs.viTriMax = rs200[0];
         res.json(rs);
     });
 
