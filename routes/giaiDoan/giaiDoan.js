@@ -41,7 +41,7 @@ module.exports = (router) => {
         let rs = await dbs.execute('select count(*) tong FROM td_map_ungvien_vitri WHERE giaidoan = "' + req.body.GiaiDoan +'"');
         if(rs[0].tong > 0){
             res.json({status: false, message: "Đã có chiến dịch sử dụng giai đoạn, không được xoá"})
-        }else if(req.body.GiaiDoan == 4 || req.body.GiaiDoan == 1 || req.body.GiaiDoan == 9 ){
+        }else if(req.body.GiaiDoan == 13 || req.body.GiaiDoan == 4 || req.body.GiaiDoan == 1 || req.body.GiaiDoan == 9 ){
             res.json({status: false, message: "Không được xóa giai đoạn mặc định"})
         }
         else{

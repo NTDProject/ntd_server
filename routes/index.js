@@ -16,8 +16,9 @@ router.post('/signin', async function (req, res) {
   
   try {
     let user = await dbs.execute('select * from td_user where username = ?',[username]);    
-    
+    console.log(user[0])
     if (user[0]) {
+
       let rs = bcryptjs.compareSync(password, user[0].password);   
       if (rs) {
         let sql1000 = 'select p.title, p.href from td_path p, td_group g, td_map_group_path m where p.path_id = m.path_id and g.group_id = m.group_id and g.group_id ="' + user[0].group_id +'"'

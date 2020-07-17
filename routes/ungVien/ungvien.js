@@ -187,7 +187,10 @@ module.exports = (router) => {
 
     router.post('/tranfer', async (req, res) => {
         // create reusable transporter object using the default SMTP transport
-        
+        let giaidoansau_id = req.body.giaidoansau_id
+        if(req.body.giaidoan  == 13 && req.body.diem < 8){
+            giaidoansau_id = 9
+        }
         let transporter = nodemailer.createTransport({
             service: 'gmail',
             auth: {
@@ -198,8 +201,10 @@ module.exports = (router) => {
             }
         });
 
+    
+
         let sql1 = 'update td_map_ungvien_vitri set status = "'+ 0 +'", note = "'+ req.body.note +'", diem = "'+ req.body.diem +'" where ungvien_id = "'+req.body.ungvien_id+'" and vitri_id = "'+req.body.vitri_id+'" and chiendich_id = "'+req.body.chiendich_id+'" and status = "'+1+'"'
-        let sql2 = 'INSERT INTO td_map_ungvien_vitri(ungvien_id, vitri_id, chiendich_id, GiaiDoan, Status, CreateDate) VALUES ("'+req.body.ungvien_id+'", "'+ req.body.vitri_id+'", "'+ req.body.chiendich_id +'", "'+ req.body.giaidoansau_id+'", "'+ 1 +'", now())' 
+        let sql2 = 'INSERT INTO td_map_ungvien_vitri(ungvien_id, vitri_id, chiendich_id, GiaiDoan, Status, CreateDate) VALUES ("'+req.body.ungvien_id+'", "'+ req.body.vitri_id+'", "'+ req.body.chiendich_id +'", "'+ giaidoansau_id+'", "'+ 1 +'", now())' 
         await dbs.execute(sql1);
         await dbs.execute(sql2);
 
