@@ -12,7 +12,7 @@ module.exports = (router) => {
 
     //get all chiến dịch
     router.get('/', async (req, res) => {
-        let rs = await dbs.execute('select u.ungvien_id,u.tenungvien,u.email,c.chiendich_id,c.ten_chiendich,v.vitri_id,v.ten_vitri,d.giaidoan,d.ten_giaidoan, (case when d.giaidoan = 4 then "Pass" when d.giaidoan = 9 then "False" else "Process" end) trangthai  from td_ungvien u, td_dm_vitri v, td_chiendich c, (select DISTINCT vitri_id, chiendich_id, ungvien_id, giaidoan  from td_map_ungvien_vitri where status = 1) m, td_dm_giaidoan d where u.ungvien_id=m.ungvien_id and v.vitri_id=m.vitri_id and c.chiendich_id=m.chiendich_id and d.giaidoan = m.giaidoan');
+        let rs = await dbs.execute('select u.ungvien_id,u.tenungvien,u.email,u.sdt,DATE_FORMAT(u.ngaysinh, "%Y-%m-%d") ngaysinh,u.gioitinh,u.truong,u.trinhdo,(case when u.trinhdo = 1 then "Đại học" when u.trinhdo = 2 then "Cao Đẳng" when u.trinhdo = 2 then "Trung cấp" else "" end) trinhdoStr,u.quequan,u.noiohientai,c.chiendich_id,c.ten_chiendich,v.vitri_id,v.ten_vitri,d.giaidoan,d.ten_giaidoan, (case when d.giaidoan = 4 then "Pass" when d.giaidoan = 9 then "False" else "Process" end) trangthai  from td_ungvien u, td_dm_vitri v, td_chiendich c, (select DISTINCT vitri_id, chiendich_id, ungvien_id, giaidoan  from td_map_ungvien_vitri where status = 1) m, td_dm_giaidoan d where u.ungvien_id=m.ungvien_id and v.vitri_id=m.vitri_id and c.chiendich_id=m.chiendich_id and d.giaidoan = m.giaidoan');
         res.json(rs);
     });
 
@@ -113,8 +113,8 @@ module.exports = (router) => {
     });
 
     router.post('/save', async (req, res) => {
-            let sql = 'Update td_ungvien set tenungvien = "'+req.body.ten_ungvien+'", email = "'+ req.body.email+'" where ungvien_id = "'+req.body.ungvien_id+'"'
-            let sql2 = 'DELETE FROM td_map_ungvien_chiendich_vitri_yeucau WHERE chiendich_id = "' + req.body.chiendich_id + '" and vitri_id = "'+req.body.vitri_id+'" and ungvien_id ="'+req.body.ungvien_id+'"'
+        let sql = 'update td_ungvien set  tenungvien = "' + req.body.ten_ungvien + '", email = "' + req.body.email + '", sdt = "'+ req.body.sdt+ '", ngaysinh = STR_TO_DATE("'+req.body.ngaysinh+'", "%d/%m/%Y"), truong = "'+ req.body.truong+ '", trinhdo = "'+ req.body.trinhdo+ '", gioitinh = "'+ req.body.gioitinh+ '", quequan = "'+ req.body.quequan+ '", noiohientai = "'+ req.body.noiohientai +'"  where ungvien_id = "'+req.body.ungvien_id+'"'
+        let sql2 = 'DELETE FROM td_map_ungvien_chiendich_vitri_yeucau WHERE chiendich_id = "' + req.body.chiendich_id + '" and vitri_id = "'+req.body.vitri_id+'" and ungvien_id ="'+req.body.ungvien_id+'"'
             console.log(sql2)
             await dbs.execute(sql2);
             let rs = await dbs.execute(sql);
@@ -134,8 +134,9 @@ module.exports = (router) => {
 
     router.post('/saveUvVtCd', async (req, res) => {
         let id = uniqid()
+        console.log(req.body)
         if(req.body.ungvien_id == "addPage"){
-            let sql = 'INSERT INTO td_ungvien (ungvien_id, tenungvien, email, sdt) VALUES ("'+id+'","'+req.body.ten_ungvien+'","'+req.body.email+'","'+req.body.sdt+'")'
+            let sql = 'INSERT INTO td_ungvien (ungvien_id, tenungvien, email, sdt, ngaysinh, truong, trinhdo, gioitinh, quequan, noiohientai) VALUES ("'+id+'","'+req.body.ten_ungvien+'","'+req.body.email+'","'+req.body.sdt+'", STR_TO_DATE("'+req.body.ngaysinh+'", "%d/%m/%Y"), "'+req.body.truong+'", "'+req.body.trinhdo+'", "'+req.body.gioitinh+'", "'+req.body.quequan+'", "'+req.body.noiohientai+'")'
             console.log(sql)
             let rs1 = await dbs.execute(sql);
             if(rs1.affectedRows > 0){
@@ -161,7 +162,7 @@ module.exports = (router) => {
                 res.json({status:false, message: "Lưu ứng viên sai"})
             }
         }else{
-            let sql5 = 'update td_ungvien set  tenungvien = "' + req.body.ten_ungvien + '", email = "' + req.body.email +'" where ungvien_id = "'+req.body.ungvien_id+'"'
+            let sql5 = 'update td_ungvien set  tenungvien = "' + req.body.ten_ungvien + '", email = "' + req.body.email + '", sdt = "'+ req.body.sdt+ '", ngaysinh = STR_TO_DATE("'+req.body.ngaysinh+'", "%d/%m/%Y"), truong = "'+ req.body.truong+ '", trinhdo = "'+ req.body.trinhdo+ '", gioitinh = "'+ req.body.gioitinh+ '", quequan = "'+ req.body.quequan+ '", noiohientai = "'+ req.body.noiohientai +'"  where ungvien_id = "'+req.body.ungvien_id+'"'
             let rs5 = await dbs.execute(sql5);
             if(rs5.affectedRows > 0){
                 let sql6 = 'delete from td_map_ungvien_vitri where ungvien_id = "' + req.body.ungvien_id + '" and chiendich_id = "' + req.body.chiendich_id + '"'
@@ -214,7 +215,7 @@ module.exports = (router) => {
             content += "<p>Hẹn gặp lại bạn trong các chiến dịch tuyển dụng khác. Chân thành cảm ơn bạn ! </p> "
         }else {
             content = "<b>Bạn đã vượt qua giai đoạn " + req.body.ten_giaidoan + " của chiến dịch " +  req.body.ten_chiendich + "</b><br>" 
-            content += "<p>Hẹn gặp lại bạn trong " + req.body.giaidoansau + ", chi tiết như sau :</p> "
+            content += "<p>Hẹn gặp lại bạn, chi tiết như sau :</p> "
             content += "<p> thời gian: " + req.body.ngayhen + "</p>"
             content += "<p> địa điểm: " + req.body.diadiemhen + "</p>"
         }
