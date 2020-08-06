@@ -210,7 +210,7 @@ module.exports = (router) => {
         await dbs.execute(sql2);
 
         let content = "";
-        if(req.body.giaidoansau_id == 9){
+        if(giaidoansau_id == 9){
             content = "<b>Bạn đã dừng lại tại giai đoạn" + req.body.ten_giaidoan + " của chiến dịch " +  req.body.ten_chiendich + "</b><br>" 
             content += "<p>Hẹn gặp lại bạn trong các chiến dịch tuyển dụng khác. Chân thành cảm ơn bạn ! </p> "
         }else {

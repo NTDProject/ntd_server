@@ -10,14 +10,14 @@ module.exports = (router) => {
 
     //get all chiến dịch
     router.get('/', async (req, res) => {
-        let rs = await dbs.execute('SELECT chiendich_id,ten_chiendich,DATE_FORMAT(ngay_batdau, "%d-%m-%Y") ngay_batdau,DATE_FORMAT(ngay_ketthuc, "%d-%m-%Y") ngay_ketthuc,GiaiDoan,trangthai,mota FROM td_chiendich ');
+        let rs = await dbs.execute('SELECT chiendich_id,ten_chiendich,DATE_FORMAT(ngay_batdau, "%d-%m-%Y") ngay_batdau,DATE_FORMAT(ngay_ketthuc, "%d-%m-%Y") ngay_ketthuc,GiaiDoan,case when CURDATE() BETWEEN ngay_batdau AND ngay_ketthuc then "Process" else "Pause" end trangthai,mota FROM td_chiendich ');
         res.json(rs);
     });
 
     router.get('/:chiendich_id', async (req, res) => {
         let sql = ''
         let sql2 = 'select c.ten_chiendich,c.mota,DATE_FORMAT(c.ngay_batdau, "%Y-%m-%d") ngay_batdau, DATE_FORMAT(c.ngay_ketthuc, "%Y-%m-%d") ngay_ketthuc,g.giaidoan giaidoanhientai_id, g.ten_giaidoan giaidoanhientai, (select h.ten_giaidoan from td_dm_giaidoan h where c.giaidoan+1 = h.giaidoan) giaidoansau, (select h.giaidoan from td_dm_giaidoan h where c.giaidoan+1 = h.giaidoan) giaidoansau_id from td_chiendich c, td_dm_giaidoan g where c.giaidoan = g.giaidoan and chiendich_id = "' + req.params.chiendich_id + '"'
-        let sql3 = 'select u.ungvien_id,u.tenungvien,u.email,c.chiendich_id,c.ten_chiendich,v.vitri_id,v.ten_vitri,d.giaidoan,d.ten_giaidoan, (case when d.giaidoan = 4 then "Pass" when d.giaidoan = 9 then "False" else "Process" end) trangthai from td_ungvien u, td_dm_vitri v, td_chiendich c, (select DISTINCT vitri_id, chiendich_id, ungvien_id, giaidoan  from td_map_ungvien_vitri where status = 1) m, td_dm_giaidoan d where u.ungvien_id=m.ungvien_id and v.vitri_id=m.vitri_id and c.chiendich_id=m.chiendich_id and d.giaidoan = m.giaidoan and m.chiendich_id = "' + req.params.chiendich_id + '"'
+        let sql3 = 'select u.ungvien_id,u.tenungvien,u.email,u.sdt,DATE_FORMAT(u.ngaysinh, "%Y-%m-%d") ngaysinh,u.gioitinh,u.truong,u.trinhdo,(case when u.trinhdo = 1 then "Đại học" when u.trinhdo = 2 then "Cao Đẳng" when u.trinhdo = 2 then "Trung cấp" else "" end) trinhdoStr,u.quequan,u.noiohientai,c.chiendich_id,c.ten_chiendich,v.vitri_id,v.ten_vitri,d.giaidoan,d.ten_giaidoan, (case when d.giaidoan = 4 then "Pass" when d.giaidoan = 9 then "False" else "Process" end) trangthai from td_ungvien u, td_dm_vitri v, td_chiendich c, (select DISTINCT vitri_id, chiendich_id, ungvien_id, giaidoan  from td_map_ungvien_vitri where status = 1) m, td_dm_giaidoan d where u.ungvien_id=m.ungvien_id and v.vitri_id=m.vitri_id and c.chiendich_id=m.chiendich_id and d.giaidoan = m.giaidoan and m.chiendich_id = "' + req.params.chiendich_id + '"'
         console.log(sql3)
         var rs = {};
         if(req.params.chiendich_id == 'addPage'){
