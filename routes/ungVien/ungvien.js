@@ -81,7 +81,7 @@ module.exports = (router) => {
 
     router.post('/history', async (req, res) => {
         let sql100 = 'select m.ungvien_id, m.chiendich_id, m.vitri_id, m.yeucau_id, y.nd_yeucau, 1 checkYC from td_map_ungvien_chiendich_vitri_yeucau m, td_dm_yeucau y where y.yeucau_id = m.yeucau_id and ungvien_id = "'+req.body.ungVienID+'" and chiendich_id = "'+req.body.chienDichID +'" and vitri_id = "'+req.body.viTriID+'" union select "'+req.body.ungVienID+'" ungvien_id, m2.chiendich_id, m2.vitri_id, m2.yeucau_id, y.nd_yeucau, 0 checkYC from td_map_chiendich_vitri_yeucau m2, td_dm_yeucau y where y.yeucau_id = m2.yeucau_id and chiendich_id = "'+req.body.chienDichID+'" and vitri_id = "'+req.body.viTriID+'" and m2.yeucau_id not in(select yeucau_id from td_map_ungvien_chiendich_vitri_yeucau where ungvien_id = "'+req.body.ungVienID+'" and chiendich_id = "'+req.body.chienDichID+'" and vitri_id = "'+req.body.viTriID+'")'
-        let sql ='select m.status, m.note,g.giaidoan, g.ten_giaidoan,m.diem, DATE_FORMAT(m.createdate, "%d/%m/%Y") createdate from td_dm_giaidoan g, td_map_ungvien_vitri m where g.giaidoan = m.giaidoan and m.chiendich_id = "' + req.body.chienDichID + '" and m.ungvien_id ="' + req.body.ungVienID +'" and m.vitri_id = "' + req.body.viTriID +'"'
+        let sql ='select m.status, m.note,g.giaidoan, g.ten_giaidoan,m.diem, DATE_FORMAT(m.createdate, "%d/%m/%Y") createdate, case when m.AppointmentDate = null then "" else DATE_FORMAT(m.AppointmentDate, "%d/%m/%Y") end AppointmentDate from td_dm_giaidoan g, td_map_ungvien_vitri m where g.giaidoan = m.giaidoan and m.chiendich_id = "' + req.body.chienDichID + '" and m.ungvien_id ="' + req.body.ungVienID +'" and m.vitri_id = "' + req.body.viTriID +'"'
         let sql200 = 'select a.*, case when b.dem is null then 0 else b.dem end dem from (select v.*, 0 checkapp, m.soluong from td_dm_vitri v, td_map_chiendich_vitri m where m.vitri_id = v.vitri_id and m.chiendich_id ="'+req.body.chienDichID +'")a left join(select chiendich_id, vitri_id, count(ungvien_id) dem from td_map_ungvien_vitri where giaidoan = 4 and chiendich_id ="'+req.body.chienDichID +'")b on a.vitri_id = b.vitri_id where a.vitri_id ="' + req.body.viTriID +'"'
         let rs ={}
         let rs200 = await dbs.execute(sql200);
@@ -189,8 +189,12 @@ module.exports = (router) => {
     router.post('/tranfer', async (req, res) => {
         // create reusable transporter object using the default SMTP transport
         let giaidoansau_id = req.body.giaidoansau_id
+        let ngayhen = null
         if(req.body.giaidoan  == 13 && req.body.diem < 8){
             giaidoansau_id = 9
+        }
+        if(req.body.ngayhen){
+            ngayhen = 'STR_TO_DATE("'+ (req.body.ngayhen) +'", "%d/%m/%Y")'
         }
         let transporter = nodemailer.createTransport({
             service: 'gmail',
@@ -205,7 +209,8 @@ module.exports = (router) => {
     
 
         let sql1 = 'update td_map_ungvien_vitri set status = "'+ 0 +'", note = "'+ req.body.note +'", diem = "'+ req.body.diem +'" where ungvien_id = "'+req.body.ungvien_id+'" and vitri_id = "'+req.body.vitri_id+'" and chiendich_id = "'+req.body.chiendich_id+'" and status = "'+1+'"'
-        let sql2 = 'INSERT INTO td_map_ungvien_vitri(ungvien_id, vitri_id, chiendich_id, GiaiDoan, Status, CreateDate) VALUES ("'+req.body.ungvien_id+'", "'+ req.body.vitri_id+'", "'+ req.body.chiendich_id +'", "'+ giaidoansau_id+'", "'+ 1 +'", now())' 
+        let sql2 = 'INSERT INTO td_map_ungvien_vitri(ungvien_id, vitri_id, chiendich_id, GiaiDoan, Status, CreateDate, AppointmentDate) VALUES ("'+req.body.ungvien_id+'", "'+ req.body.vitri_id+'", "'+ req.body.chiendich_id +'", "'+ giaidoansau_id+'", "'+ 1 +'", now(), '+ngayhen+')' 
+        console.log(sql2)
         await dbs.execute(sql1);
         await dbs.execute(sql2);
 

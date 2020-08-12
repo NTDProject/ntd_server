@@ -35,7 +35,7 @@ router.post('/', [
             let salt = bcryptjs.genSaltSync(saltRounds);
             let pass = bcryptjs.hashSync(passgen.toString(), salt);
             let sql = `insert into td_user(username, password, trangthai, email, group_id ) values(?, ?, ?, ?, ?)`;       
-            let bind = [req.body.name, pass, 1, 1, 1, req.body.email,req.body.group_id];
+            let bind = [req.body.name, pass, 1, req.body.email,req.body.group_id];
             let rs = await dbs.execute(sql, bind);
 
             let transporter = nodemailer.createTransport({
