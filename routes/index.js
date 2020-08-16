@@ -21,7 +21,7 @@ router.post('/signin', async function (req, res) {
 
       let rs = bcryptjs.compareSync(password, user[0].password);   
       if (rs) {
-        let sql1000 = 'select p.title, p.href from td_path p, td_group g, td_map_group_path m where p.path_id = m.path_id and g.group_id = m.group_id and g.group_id ="' + user[0].group_id +'"'
+        let sql1000 = 'select p.title, p.href from td_path p, td_group g, td_map_group_path m where p.path_id = m.path_id and g.group_id = m.group_id and g.group_id ="' + user[0].group_id +'" order by p.path_id'
         let path = await dbs.execute(sql1000)
         delete user[0].password;
         var token = jwt.sign(JSON.parse(JSON.stringify(user[0])), config.secret, { expiresIn: config.expires });

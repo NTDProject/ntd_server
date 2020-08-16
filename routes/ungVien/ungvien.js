@@ -133,7 +133,7 @@ module.exports = (router) => {
     });
 
     router.post('/saveUvVtCd', async (req, res) => {
-        let id = uniqid()
+        let id = await dbs.getNextID("td_ungvien", "ungvien_id")
         console.log(req.body)
         if(req.body.ungvien_id == "addPage"){
             let sql = 'INSERT INTO td_ungvien (ungvien_id, tenungvien, email, sdt, ngaysinh, truong, trinhdo, gioitinh, quequan, noiohientai) VALUES ("'+id+'","'+req.body.ten_ungvien+'","'+req.body.email+'","'+req.body.sdt+'", STR_TO_DATE("'+req.body.ngaysinh+'", "%d/%m/%Y"), "'+req.body.truong+'", "'+req.body.trinhdo+'", "'+req.body.gioitinh+'", "'+req.body.quequan+'", "'+req.body.noiohientai+'")'

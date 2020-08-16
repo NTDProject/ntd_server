@@ -1,7 +1,7 @@
 module.exports = {
-    host: '34.92.167.188',
+    host: '34.96.135.150',
     user: 'root',
-    password: '123456a@',
+    password: 'admin123',
     database: 'tuyendung',
     secret: 'secret',
     expires: 18000

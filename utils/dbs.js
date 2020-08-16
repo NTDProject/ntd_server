@@ -49,7 +49,11 @@ const Service = {
     })
   },
   getNextID: (table, column_name) => {
+    
+
     return new Promise(async (resolve, reject) => {
+      console.log(table)
+    console.log(column_name)
       let conn;
       let sql = `select ?? from ?? order by ?? desc limit 1`;
       bind = [column_name, table, column_name]
@@ -57,10 +61,12 @@ const Service = {
         conn = Service.getConn();
         conn.query(sql, bind, function (error, results) {
           if (error) reject(error);
+
           console.log(results.length);
-          let rs = table + '1'.padStart(20 - table.length, '0');
+          let rs = 'UV' + '1'.padStart(5, '0');
           if (results.length > 0) {
-            rs = table + (parseInt(results[0].customerid.replace(table, '')) + 1).toString().padStart(20 - table.length, '0');
+            rs = 'UV' + (parseInt(results[0].ungvien_id.replace('UV', '')) + 1).toString().padStart(5, '0');
+            console.log(rs)
           }
           resolve(rs);
         });
