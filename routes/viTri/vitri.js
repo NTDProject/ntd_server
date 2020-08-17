@@ -41,10 +41,10 @@ module.exports = (router) => {
         else{
             let rs = await dbs.execute('DELETE FROM td_dm_vitri WHERE vitri_id = "' + req.body.vitri_id +'"');
             if(rs.affectedRows>0){
-                res.json({status: true, message: "Xoá chiến dịch thành công"});
+                res.json({status: true, message: "Xoá vị trí thành công"});
             }
             else{
-                res.json({status: false, message: "Xoá chiến dịch không thành công"});  
+                res.json({status: false, message: "Xoá vị trí không thành công"});  
             }
             
         }
