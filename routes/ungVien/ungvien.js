@@ -47,6 +47,11 @@ module.exports = (router) => {
         rs.vitri = rs2
         res.json(rs);
     });
+    router.get('/getUngVienByViTriAndChienDich/:chiendich_id/:vitri_id', async (req, res) => {
+        let sql ='select u.ungvien_id,u.tenungvien,u.email,u.sdt,DATE_FORMAT(u.ngaysinh, "%Y-%m-%d") ngaysinh,u.gioitinh,u.truong,u.trinhdo,(case when u.trinhdo = 1 then "Đại học" when u.trinhdo = 2 then "Cao Đẳng" when u.trinhdo = 2 then "Trung cấp" else "" end) trinhdoStr,u.quequan,u.noiohientai,c.chiendich_id,c.ten_chiendich,v.vitri_id,v.ten_vitri,d.giaidoan,d.ten_giaidoan, (case when d.giaidoan = 4 then "Pass" when d.giaidoan = 9 then "False" else "Process" end) trangthai from td_ungvien u, td_dm_vitri v, td_chiendich c, (select DISTINCT vitri_id, chiendich_id, ungvien_id, giaidoan  from td_map_ungvien_vitri where status = 1) m, td_dm_giaidoan d where u.ungvien_id=m.ungvien_id and v.vitri_id=m.vitri_id and c.chiendich_id=m.chiendich_id and d.giaidoan = m.giaidoan and m.chiendich_id = "' + req.params.chiendich_id + '" and m.vitri_id = "'+req.params.vitri_id+'"'
+        let rs = await dbs.execute(sql)
+        res.json(rs);
+    });
 
     router.post('/getUngVienByViTriChienDichYeuCau', async (req, res) => {
         let sql = ''
